@@ -1,10 +1,9 @@
-\\ CONSTANTS
+"This is my awesome test string!!!"
 bool boolean_id_a
 int integer_id
 real real_id
 string string_id
 
-\\ boolean
 true
 false
 true and true
@@ -12,7 +11,6 @@ true or false
 not false
 iff true
 
-\\ integer
 0
 12345
 -12345
@@ -25,7 +23,6 @@ iff true
 1 = 1
 1 < 2
 
-\\ real
 0.0
 12345.6
 -12345.6
@@ -38,7 +35,6 @@ iff true
 log 7.0
 e 7.0
 
-\\ string
 ( a string )
 ( abcde string )
 ( "a" string )

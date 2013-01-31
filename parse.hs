@@ -85,6 +85,9 @@ keywords = [
 isSymbol :: Char -> Bool
 isSymbol c = c `elem` "+-*/%^=<"
 
+isNotQuote :: Char -> Bool
+isNotQuote c = (c /= '"')
+
 lexer :: String->[Token]
 lexer xs = let s = removeWhiteSpace xs
     in lexer' s
@@ -96,6 +99,8 @@ lexer' xs = let (t, rest) = lexToken xs
 lexToken :: String->(Token, String)
 lexToken [] = (EOF, [])
 lexToken l@(x:xs)
+    | (x == '"') = let (string, rest@(r:rs)) = readString xs
+        in (StringTok string, rs)
     | isDigit x = let (num, rest) = readNum l
         in case rest of
             ('.':d:_) | isDigit d -> do
@@ -122,6 +127,10 @@ removeWhiteSpace [] = []
 removeWhiteSpace l@(x:xs) = case isSpace x of
     True -> removeWhiteSpace xs
     False -> l
+
+readString :: String->(String, String)
+readString [] = ([], [])
+readString xs = span isNotQuote xs
 
 readNum :: String->(Int, String)
 readNum [] = (0, [])
