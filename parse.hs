@@ -9,7 +9,7 @@ import qualified Data.Char (isSymbol)
 data Token
         = VarId String
         | IntTok Int
-        | FloatTok Rational
+        | FloatTok Float
         | StringTok String
         | BoolTok Bool
 
@@ -88,6 +88,9 @@ isSymbol c = c `elem` "+-*/%^=<"
 isNotQuote :: Char -> Bool
 isNotQuote c = (c /= '"')
 
+isDigOrDec :: Char -> Bool
+isDigOrDec c = (c == '.') || isDigit c
+
 lexer :: String->[Token]
 lexer xs = let s = removeWhiteSpace xs
     in lexer' s
@@ -102,10 +105,9 @@ lexToken l@(x:xs)
     | (x == '"') = let (string, rest@(r:rs)) = readString xs
         in (StringTok string, rs)
     | isDigit x = let (num, rest) = readNum l
-        in case rest of
-            ('.':d:_) | isDigit d -> do
-                (IntTok num, rest)
-            _ -> (IntTok num, rest)
+        in case isFloat num of
+            True -> (FloatTok (read num::Float), rest)
+            False -> (IntTok (read num::Int), rest)
     | isAlpha x = let (string, rest) = readIdentifier l
         in (VarId string, rest)
     | isSymbol x = do
@@ -132,14 +134,19 @@ readString :: String->(String, String)
 readString [] = ([], [])
 readString xs = span isNotQuote xs
 
-readNum :: String->(Int, String)
-readNum [] = (0, [])
-readNum xs = let (num, rest) = span isDigit xs
-    in (read num::Int, rest)
+readNum :: String->(String, String)
+readNum [] = ([], [])
+readNum xs = span isDigOrDec xs
 
 readIdentifier :: String->(String, String)
 readIdentifier [] = ([], [])
 readIdentifier xs = span isAlpha xs 
+
+isFloat :: String->Bool
+isFloat [] = False 
+isFloat l@(x:xs) = case (x == '.') of
+    True -> True
+    False -> isFloat xs
 
 main = do
     (fileName1:_) <- getArgs
