@@ -140,7 +140,10 @@ readNum xs = span isDigOrDec xs
 
 readIdentifier :: String->(String, String)
 readIdentifier [] = ([], [])
-readIdentifier xs = span isAlpha xs 
+readIdentifier xs = span isIdentChar xs 
+
+isIdentChar :: Char -> Bool
+isIdentChar x = (isAlphaNum x || x == '_') 
 
 isFloat :: String->Bool
 isFloat [] = False 
