@@ -1,10 +1,12 @@
 import System.Environment
 import qualified Data.ByteString.Lazy as B
 
-import Data.Char (isAlpha, isLower, isUpper, toLower,
+import Data.Char (isAlpha, isAlphaNum, isLower, isUpper, toLower,
                   isDigit, isHexDigit, isOctDigit, isSpace,
                   ord, chr, digitToInt)
 import qualified Data.Char (isSymbol)
+import Data.List (elemIndex)
+import Data.Maybe(fromJust)
 
 data Token
         = VarId String
@@ -108,8 +110,6 @@ lexToken l@(x:xs)
         in case isFloat num of
             True -> (FloatTok (read num::Float), rest)
             False -> (IntTok (read num::Int), rest)
-    | isAlpha x = let (string, rest) = readIdentifier l
-        in (VarId string, rest)
     | isSymbol x = do
         case x of
             ('+') -> (Plus, xs)
@@ -123,6 +123,10 @@ lexToken l@(x:xs)
             ('(') -> (LeftParen, xs)
             (')') -> (RightParen, xs)
             _ -> (Error "Unknown character", xs)
+    | isKeywords l = let (string, rest) = readWord l
+        in (getKeyAt keywords (fromJust (elemIndex string (getKeywords keywords))), rest)
+    | isAlpha x = let (string, rest) = readIdentifier l
+        in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
 
 removeWhiteSpace [] = []
@@ -150,6 +154,28 @@ isFloat [] = False
 isFloat l@(x:xs) = case (x == '.') of
     True -> True
     False -> isFloat xs
+
+readWord :: String->(String, String)
+readWord [] = ([], [])
+readWord xs = span isAlpha xs
+
+getKeywords :: [(String,Token)] -> [String]
+getKeywords [] = []
+getKeywords ((x,y):xs) = x:(getKeywords xs)
+
+getKeyAt :: [(String, Token)] -> Int -> Token
+getKeyAt list index = snd (list !! index)
+
+delimKeyStr :: String -> String
+delimKeyStr [] = []
+delimKeyStr (x:xs) = if isAlpha x
+                     then x:(delimKeyStr(xs))
+                     else []
+
+isKeywords :: String -> Bool
+isKeywords x = ((delimKeyStr x) `elem` (getKeywords keywords))
+
+
 
 main = do
     (fileName1:_) <- getArgs

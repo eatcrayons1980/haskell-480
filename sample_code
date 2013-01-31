@@ -45,3 +45,8 @@ e 7.0
 ( < a b )
 ( = "a" "a" )
 ( < "a" "b" )
+
+sin x
+cos x
+exp x
+println("hello world")
