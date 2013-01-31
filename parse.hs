@@ -49,8 +49,8 @@ data Token
         | KW_While
 
         | EOF
-        | Error
-        deriving (Eq,Show)
+        | Error String
+        deriving (Eq)
 
 operators :: [(String,Token)]
 operators = [
@@ -120,8 +120,8 @@ lexToken l@(x:xs)
             ('<') -> (Less, xs)
             ('(') -> (LeftParen, xs)
             (')') -> (RightParen, xs)
-            _ -> (Error, xs)
-    | otherwise = (Error, xs)
+            _ -> (Error "Unknown character", xs)
+    | otherwise = (Error "Unknown character", xs)
 
 removeWhiteSpace [] = []
 removeWhiteSpace l@(x:xs) = case isSpace x of
@@ -148,4 +148,37 @@ main = do
 printWords :: FilePath -> IO ()
 printWords source = do
     contents <- readFile source
-    putStrLn (show (lexer contents))
+    mapM_ putStrLn (map show (lexer contents))
+
+instance Show Token where
+    show (VarId x)                = "Variable: "++show x
+    show (IntTok x)               = "Integer: "++show x
+    show (FloatTok x)             = "Float: "++show x
+    show (StringTok x)            = "String: "++show x
+    show (BoolTok x)              = "Bool: "++show x
+    show (LeftParen)              = "Separator: ("
+    show (RightParen)             = "Separator: )"
+    show (Minus)                  = "Arithmetic Op: -"
+    show (Plus)                   = "Arithmetic Op: +"
+    show (Mod)                    = "Arithmetic Op: %"
+    show (Carrot)                 = "Arithmetic Op: ^"
+    show (Mult)                   = "Arithmetic Op: *"
+    show (Div)                    = "Arithmetic Op: /"
+    show (Equal)                  = "Logic Op: ="
+    show (Less)                   = "Logic Op: <"
+    show (KW_And)                 = "Logic Op: &&"
+    show (KW_Or)                  = "Logic Op: ||"
+    show (KW_Not)                 = "Logic Op: !"
+    show (KW_Iff)                 = "Logic Op: Iff"
+    show (KW_Assign)              = "Keyword: assign"
+    show (KW_Cos)                 = "Keyword: cos"
+    show (KW_Exp)                 = "Keyword: e"
+    show (KW_If)                  = "Keyword: if"
+    show (KW_Let)                 = "Keyword: let"
+    show (KW_Logn)                = "Keyword: logn"
+    show (KW_PrintLn)             = "Keyword: println"
+    show (KW_Sin)                 = "Keyword: sin"
+    show (KW_Tan)                 = "Keyword: tan"
+    show (KW_While)               = "Keyword: while"
+    show (EOF)                    = "EOF"
+    show (Error x)                = "Error: "++show x
