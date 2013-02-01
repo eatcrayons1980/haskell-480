@@ -85,7 +85,7 @@ keywords = [
     ]
 
 isSymbol :: Char -> Bool
-isSymbol c = c `elem` "+-*/%^=<"
+isSymbol c = c `elem` "+-*/%^=<()"
 
 isNotQuote :: Char -> Bool
 isNotQuote c = (c /= '"')
