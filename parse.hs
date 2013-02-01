@@ -50,6 +50,11 @@ data Token
         | KW_Tan
         | KW_While
 
+        | KW_int
+        | KW_float
+        | KW_bool
+        | KW_string        
+
         | EOF
         | Error String
         deriving (Eq)
@@ -81,7 +86,11 @@ keywords = [
     ( "println", KW_PrintLn ),
     ( "sin", KW_Sin ),
     ( "tan", KW_Tan ),
-    ( "while", KW_While )
+    ( "while", KW_While ),
+    ( "int", KW_int ),
+    ( "float", KW_float ),
+    ( "string", KW_string ),
+    ( "bool", KW_bool )
     ]
 
 isSymbol :: Char -> Bool
@@ -214,5 +223,10 @@ instance Show Token where
     show (KW_Sin)                 = "Keyword: \tsin"
     show (KW_Tan)                 = "Keyword: \ttan"
     show (KW_While)               = "Keyword: \twhile"
+    show (KW_int)                 = "Keyword: \tint"
+    show (KW_float)               = "Keyword: \tfloat"
+    show (KW_bool)                = "Keyword: \tbool"
+    show (KW_string)              = "Keyword: \tstring"
     show (EOF)                    = "EOF"
     show (Error x)                = "Error: \t\t"++show x
+    
