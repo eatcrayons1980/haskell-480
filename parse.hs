@@ -134,8 +134,7 @@ lexToken l@(x:xs)
             ('(') -> (LeftParen, xs)
             (')') -> (RightParen, xs)
     | isKeywords l = let (string, rest) = readWord l
-        in (getKeyAt keywords (fromJust (elemIndex string (getKeywords keywords))), rest)
-        --in ((map snd (filter ((==l).fst) keywords)) !! 0, rest)
+        in ((map snd (filter ((==string).fst) keywords)) !! 0, rest)
     | isAlpha x = let (string, rest) = readIdentifier l
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
@@ -169,19 +168,6 @@ isFloat l@(x:xs) = case (x == '.') of
 readWord :: String->(String, String)
 readWord [] = ([], [])
 readWord xs = span isAlpha xs
-
-getKeywords :: [(String,Token)] -> [String]
-getKeywords [] = []
-getKeywords ((x,y):xs) = x:(getKeywords xs)
-
-getKeyAt :: [(String, Token)] -> Int -> Token
-getKeyAt list index = snd (list !! index)
-
---delimKeyStr :: String -> String
---delimKeyStr [] = []
---delimKeyStr (x:xs) = if isAlpha x
---                     then x:(delimKeyStr(xs))
---                     else []
 
 isKeywords :: String -> Bool
 isKeywords x = (fst (readWord x) `elem` (map fst keywords))
