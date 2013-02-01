@@ -90,7 +90,9 @@ keywords = [
     ( "int", KW_int ),
     ( "float", KW_float ),
     ( "string", KW_string ),
-    ( "bool", KW_bool )
+    ( "bool", KW_bool ),
+    ( "true", BoolTok True),
+    ( "false", BoolTok False)
     ]
 
 isSymbol :: Char -> Bool
@@ -229,4 +231,4 @@ instance Show Token where
     show (KW_string)              = "Keyword: \tstring"
     show (EOF)                    = "EOF"
     show (Error x)                = "Error: \t\t"++show x
-    
+        
