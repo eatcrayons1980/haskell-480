@@ -1,17 +1,9 @@
 import System.Environment
-import qualified Data.ByteString.Lazy as B
-
-import Data.Char (isAlpha, isAlphaNum, isLower, isUpper, toLower,
-                  isDigit, isHexDigit, isOctDigit, isSpace,
-                  ord, chr, digitToInt)
+import Data.Char (isAlpha, isAlphaNum, isLower, isUpper, toLower, isDigit, isHexDigit, isOctDigit, isSpace, ord, chr, digitToInt)
 import qualified Data.Char (isSymbol)
-import Data.List (elemIndex)
-import Data.Maybe(fromJust)
 
 data Token
-        = VarId String
-        | IntTok Int
-        | FloatTok Float
+        = VarId String | IntTok Int | FloatTok Float
         | StringTok String
         | BoolTok Bool
 
