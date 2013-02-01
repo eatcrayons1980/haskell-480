@@ -74,10 +74,10 @@ keywords = [
     ( "iff", KW_Iff ),
     ( "assign", KW_Assign ),
     ( "cos", KW_Cos ),
-    ( "exp", KW_Exp ),
+    ( "e", KW_Exp ),
     ( "if", KW_If ),
     ( "let", KW_Let ),
-    ( "logn", KW_Logn ),
+    ( "log", KW_Logn ),
     ( "println", KW_PrintLn ),
     ( "sin", KW_Sin ),
     ( "tan", KW_Tan ),
@@ -122,9 +122,9 @@ lexToken l@(x:xs)
             ('<') -> (Less, xs)
             ('(') -> (LeftParen, xs)
             (')') -> (RightParen, xs)
-            _ -> (Error "Unknown character", xs)
     | isKeywords l = let (string, rest) = readWord l
         in (getKeyAt keywords (fromJust (elemIndex string (getKeywords keywords))), rest)
+        --in ((map snd (filter ((==l).fst) keywords)) !! 0, rest)
     | isAlpha x = let (string, rest) = readIdentifier l
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
@@ -166,16 +166,14 @@ getKeywords ((x,y):xs) = x:(getKeywords xs)
 getKeyAt :: [(String, Token)] -> Int -> Token
 getKeyAt list index = snd (list !! index)
 
-delimKeyStr :: String -> String
-delimKeyStr [] = []
-delimKeyStr (x:xs) = if isAlpha x
-                     then x:(delimKeyStr(xs))
-                     else []
+--delimKeyStr :: String -> String
+--delimKeyStr [] = []
+--delimKeyStr (x:xs) = if isAlpha x
+--                     then x:(delimKeyStr(xs))
+--                     else []
 
 isKeywords :: String -> Bool
-isKeywords x = ((delimKeyStr x) `elem` (getKeywords keywords))
-
-
+isKeywords x = (fst (readWord x) `elem` (map fst keywords))
 
 main = do
     (fileName1:_) <- getArgs
