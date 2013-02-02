@@ -42,10 +42,10 @@ data Token
         | KW_Tan
         | KW_While
 
-        | KW_int
-        | KW_float
-        | KW_bool
-        | KW_string        
+        | KW_Int
+        | KW_Float
+        | KW_Bool
+        | KW_String        
 
         | EOF
         | Error String
