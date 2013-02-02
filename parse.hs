@@ -1,9 +1,10 @@
 import System.Environment
-import Data.Char (isAlpha, isAlphaNum, isLower, isUpper, toLower, isDigit, isHexDigit, isOctDigit, isSpace, ord, chr, digitToInt)
-import qualified Data.Char (isSymbol)
+import Data.Char (isAlpha, isAlphaNum, toLower, isDigit, isSpace)
 
 data Token
-        = VarId String | IntTok Int | FloatTok Float
+        = VarId String
+        | IntTok Int
+        | FloatTok Float
         | StringTok String
         | BoolTok Bool
 
@@ -20,7 +21,6 @@ data Token
         | Carrot
         | Mult
         | Div
-
         | Equal
         | Less
 
@@ -51,16 +51,18 @@ data Token
         | Error String
         deriving (Eq)
 
-operators :: [(String,Token)]
+operators :: [(Char,Token)]
 operators = [
-    ( "-", Minus ),
-    ( "+", Plus ),
-    ( "%", Mod ),
-    ( "^", Carrot ),
-    ( "*", Mult ),
-    ( "/", Div ),
-    ( "=", Equal ),
-    ( "<", Less )
+    ( '-', Minus ),
+    ( '+', Plus ),
+    ( '%', Mod ),
+    ( '^', Carrot ),
+    ( '*', Mult ),
+    ( '/', Div ),
+    ( '=', Equal ),
+    ( '<', Less ),
+    ( '(', LeftParen),
+    ( ')', RightParen)
     ]
 
 keywords :: [(String,Token)]
@@ -79,16 +81,13 @@ keywords = [
     ( "sin", KW_Sin ),
     ( "tan", KW_Tan ),
     ( "while", KW_While ),
-    ( "int", KW_int ),
-    ( "float", KW_float ),
-    ( "string", KW_string ),
-    ( "bool", KW_bool ),
+    ( "int", KW_Int ),
+    ( "float", KW_Float ),
+    ( "string", KW_String ),
+    ( "bool", KW_Bool ),
     ( "true", BoolTok True),
     ( "false", BoolTok False)
     ]
-
-isSymbol :: Char -> Bool
-isSymbol c = c `elem` "+-*/%^=<()"
 
 isNotQuote :: Char -> Bool
 isNotQuote c = (c /= '"')
@@ -113,18 +112,7 @@ lexToken l@(x:xs)
         in case isFloat num of
             True -> (FloatTok (read num::Float), rest)
             False -> (IntTok (read num::Int), rest)
-    | isSymbol x = do
-        case x of
-            ('+') -> (Plus, xs)
-            ('-') -> (Minus, xs)
-            ('*') -> (Mult, xs)
-            ('/') -> (Div, xs)
-            ('%') -> (Mod, xs)
-            ('^') -> (Carrot, xs)
-            ('=') -> (Equal, xs)
-            ('<') -> (Less, xs)
-            ('(') -> (LeftParen, xs)
-            (')') -> (RightParen, xs)
+    | isOperator x = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
     | isKeywords l = let (string, rest) = readWord l
         in ((map snd (filter ((==string).fst) keywords)) !! 0, rest)
     | isAlpha x = let (string, rest) = readIdentifier l
@@ -160,6 +148,9 @@ isFloat l@(x:xs) = case (x == '.') of
 readWord :: String->(String, String)
 readWord [] = ([], [])
 readWord xs = span isAlpha xs
+
+isOperator :: Char -> Bool
+isOperator x = x `elem` (map fst operators)
 
 isKeywords :: String -> Bool
 isKeywords x = (fst (readWord x) `elem` (map fst keywords))
@@ -203,9 +194,9 @@ instance Show Token where
     show (KW_Sin)                 = "Keyword:    sin"
     show (KW_Tan)                 = "Keyword:    tan"
     show (KW_While)               = "Keyword:    while"
-    show (KW_int)                 = "Keyword: \tint"
-    show (KW_float)               = "Keyword: \tfloat"
-    show (KW_bool)                = "Keyword: \tbool"
-    show (KW_string)              = "Keyword: \tstring"
+    show (KW_Int)                 = "Keyword:    int"
+    show (KW_Float)               = "Keyword:    float"
+    show (KW_Bool)                = "Keyword:    bool"
+    show (KW_String)              = "Keyword:    string"
     show (EOF)                    = "EOF"
     show (Error x)                = "Error:      "++show x
