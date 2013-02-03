@@ -125,7 +125,7 @@ readString xs = span isNotQuote xs
 
 readNum :: String->(String, String)
 readNum [] = ([], [])
-readNum xs = span isDigOrDec xs
+readNum (x:xs)
 
 readVariable :: String->(String, String)
 readVariable [] = ([], [])
@@ -136,7 +136,7 @@ readKeyword [] = ([], [])
 readKeyword xs = span isVarChar xs
 
 isVarChar :: Char -> Bool
-isVarChar x = (isAlphaNum x || x == '_') 
+isVarChar x = (isAlpha x || x == '_') 
 
 isFloat :: String->Bool
 isFloat [] = False 
@@ -147,8 +147,8 @@ isFloat l@(x:xs) = case (x == '.') of
 isNotQuote :: Char -> Bool
 isNotQuote c = (c /= '"')
 
-isDigOrDec :: Char -> Bool
-isDigOrDec c = (c == '.') || isDigit c
+--isDigOrDec :: Char -> Bool
+--isDigOrDec c = (c == '.') || isDigit c
 
 isOperator :: Char -> Bool
 isOperator x = x `elem` (map fst operators)
@@ -162,7 +162,6 @@ isVariable (x:xs) c
 
 isKeywords :: String -> Bool
 isKeywords x = (fst (readKeyword x) `elem` (map fst keywords))
-
 
 main = do
     (fileName1:_) <- getArgs
