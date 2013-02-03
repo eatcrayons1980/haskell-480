@@ -73,7 +73,7 @@ keywords = [
     ( "iff", KW_Iff ),
     ( "assign", KW_Assign ),
     ( "cos", KW_Cos ),
-    ( "e", KW_Exp ),
+    ( "exp", KW_Exp ),
     ( "if", KW_If ),
     ( "let", KW_Let ),
     ( "log", KW_Logn ),
@@ -88,12 +88,6 @@ keywords = [
     ( "true", BoolTok True),
     ( "false", BoolTok False)
     ]
-
-isNotQuote :: Char -> Bool
-isNotQuote c = (c /= '"')
-
-isDigOrDec :: Char -> Bool
-isDigOrDec c = (c == '.') || isDigit c
 
 lexer :: String->[Token]
 lexer xs = let s = removeWhiteSpace xs
@@ -119,10 +113,17 @@ lexToken l@(x:xs)
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
 
+removeWhiteSpace :: [Char] -> [Char]
 removeWhiteSpace [] = []
 removeWhiteSpace l@(x:xs) = case isSpace x of
     True -> removeWhiteSpace xs
     False -> l
+
+isNotQuote :: Char -> Bool
+isNotQuote c = (c /= '"')
+
+isDigOrDec :: Char -> Bool
+isDigOrDec c = (c == '.') || isDigit c
 
 readString :: String->(String, String)
 readString [] = ([], [])
