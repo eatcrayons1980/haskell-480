@@ -109,7 +109,7 @@ lexToken l@(x:xs)
     | isOperator x = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
     | isKeywords l = let (string, rest) = readWord l
         in ((map snd (filter ((==string).fst) keywords)) !! 0, rest)
-    | isIdentChar x = let (string, rest) = readIdentifier l
+    | isVariable l = let (string, rest) = readIdentifier l
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
 
@@ -152,6 +152,10 @@ readWord xs = span isIdentChar xs
 
 isOperator :: Char -> Bool
 isOperator x = x `elem` (map fst operators)
+
+isVariable :: String -> Bool
+isVariable [] = True
+isVariable (x:xs) = if isIdentChar x then isVariable xs else False
 
 isKeywords :: String -> Bool
 isKeywords x = (fst (readWord x) `elem` (map fst keywords))
