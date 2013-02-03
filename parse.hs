@@ -147,7 +147,7 @@ isFloat l@(x:xs) = case (x == '.') of
 
 readWord :: String->(String, String)
 readWord [] = ([], [])
-readWord xs = span isAlpha xs
+readWord xs = span isIdentChar xs
 
 isOperator :: Char -> Bool
 isOperator x = x `elem` (map fst operators)
