@@ -129,7 +129,11 @@ readNum xs = span isDigOrDec xs
 
 readVariable :: String->(String, String)
 readVariable [] = ([], [])
-readVariable xs = span isIdentChar xs 
+readVariable xs = span isIdentChar xs
+
+readWord :: String->(String, String)
+readWord [] = ([], [])
+readWord xs = span isIdentChar xs
 
 isIdentChar :: Char -> Bool
 isIdentChar x = (isAlphaNum x || x == '_') 
@@ -139,10 +143,6 @@ isFloat [] = False
 isFloat l@(x:xs) = case (x == '.') of
     True -> True
     False -> isFloat xs
-
-readWord :: String->(String, String)
-readWord [] = ([], [])
-readWord xs = span isIdentChar xs
 
 isNotQuote :: Char -> Bool
 isNotQuote c = (c /= '"')
