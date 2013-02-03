@@ -119,8 +119,6 @@ lexToken l@(x:xs)
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
 
-
-
 readString :: String->(String, String)
 readString [] = ([], [])
 readString xs = span isNotQuote xs
