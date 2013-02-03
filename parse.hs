@@ -1,5 +1,5 @@
 import System.Environment
-import Data.Char (isAlphaNum, toLower, isDigit, isSpace)
+import Data.Char (isAlpha, toLower, isDigit, isSpace)
 
 data Token
         = VarId String
@@ -108,10 +108,7 @@ lexToken [] = (EOF, [])
 lexToken l@(x:xs)
     | (x == '"') = let (string, rest@(r:rs)) = readString xs
         in (StringTok string, rs)
-    | isDigit x = let (num, rest) = readNum l
-        in case isFloat num of
-            True -> (FloatTok (read num::Float), rest)
-            False -> (IntTok (read num::Int), rest)
+    | isDigit x = readNum l
     | isOperator x = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
     | isKeywords l = let (string, rest) = readKeyword l
         in ((map snd (filter ((==string).fst) keywords)) !! 0, rest)
@@ -123,9 +120,26 @@ readString :: String->(String, String)
 readString [] = ([], [])
 readString xs = span isNotQuote xs
 
-readNum :: String->(String, String)
-readNum [] = ([], [])
-readNum (x:xs)
+readNum :: String->(Token, String)
+readNum [] = (EOF, [])
+readNum xs = let (i, as) = span isDigit xs
+                in (case as of
+                        ('.':ps) -> let (j, bs) = span isDigit ps
+                                        in (if null j
+                                            then (IntTok (read i::Int), as)
+                                            else (case bs of
+                                                 ('e':'+':es) -> let (k, cs) = span isDigit es in (FloatTok (read (concat [i, ".", j, "e+", k])::Float), cs)
+                                                 ('e':'-':es) -> let (k, cs) = span isDigit es in (FloatTok (read (concat [i, ".", j, "e-", k])::Float), cs)
+                                                 ('e':z:es) -> if (isDigit z)
+                                                                then (let (k, cs) = span isDigit (z:es) in (FloatTok (read (concat [i, ".", j, "e+", k])), cs))
+                                                                else (FloatTok (read (concat [i, ".", j, "e+0"])), (z:es))
+                                                 _ -> (FloatTok (read (concat [i, ".", j])::Float), bs)))
+                        ('e':'+':es) -> let (k, cs) = span isDigit es in (FloatTok (read (concat [i, ".0e+", k])::Float), cs)
+                        ('e':'-':es) -> let (k, cs) = span isDigit es in (FloatTok (read (concat [i, ".0e-", k])::Float), cs)
+                        ('e':z:es) -> if (isDigit z)
+                                            then (let (k, cs) = span isDigit (z:es) in (FloatTok (read (concat [i, ".0e+", k])), cs))
+                                            else (FloatTok (read (concat [i, ".0e+0"])), (z:es))                        
+                        _ -> (IntTok (read i::Int), as))
 
 readVariable :: String->(String, String)
 readVariable [] = ([], [])
