@@ -89,6 +89,12 @@ keywords = [
     ( "false", BoolTok False)
     ]
 
+removeWhiteSpace :: [Char] -> [Char]
+removeWhiteSpace [] = []
+removeWhiteSpace l@(x:xs) = case isSpace x of
+    True -> removeWhiteSpace xs
+    False -> l
+
 lexer :: String->[Token]
 lexer xs = let s = removeWhiteSpace xs
     in lexer' s
@@ -107,17 +113,13 @@ lexToken l@(x:xs)
             True -> (FloatTok (read num::Float), rest)
             False -> (IntTok (read num::Int), rest)
     | isOperator x = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
-    | isKeywords l = let (string, rest) = readWord l
+    | isKeywords l = let (string, rest) = readKeyword l
         in ((map snd (filter ((==string).fst) keywords)) !! 0, rest)
-    | isVariable l = let (string, rest) = readVariable l
+    | isVariable l 0 = let (string, rest) = readVariable l
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
 
-removeWhiteSpace :: [Char] -> [Char]
-removeWhiteSpace [] = []
-removeWhiteSpace l@(x:xs) = case isSpace x of
-    True -> removeWhiteSpace xs
-    False -> l
+
 
 readString :: String->(String, String)
 readString [] = ([], [])
@@ -129,14 +131,14 @@ readNum xs = span isDigOrDec xs
 
 readVariable :: String->(String, String)
 readVariable [] = ([], [])
-readVariable xs = span isIdentChar xs
+readVariable xs = span isVarChar xs
 
-readWord :: String->(String, String)
-readWord [] = ([], [])
-readWord xs = span isIdentChar xs
+readKeyword :: String->(String, String)
+readKeyword [] = ([], [])
+readKeyword xs = span isVarChar xs
 
-isIdentChar :: Char -> Bool
-isIdentChar x = (isAlphaNum x || x == '_') 
+isVarChar :: Char -> Bool
+isVarChar x = (isAlphaNum x || x == '_') 
 
 isFloat :: String->Bool
 isFloat [] = False 
@@ -153,12 +155,15 @@ isDigOrDec c = (c == '.') || isDigit c
 isOperator :: Char -> Bool
 isOperator x = x `elem` (map fst operators)
 
-isVariable :: String -> Bool
-isVariable [] = True
-isVariable (x:xs) = if isIdentChar x then isVariable xs else False
+isVariable :: String -> Int -> Bool
+isVariable (x:xs) c
+    | isVarChar x = let a = c+1
+                    in isVariable xs a
+    | (c > 0) = True
+    | otherwise = False
 
 isKeywords :: String -> Bool
-isKeywords x = (fst (readWord x) `elem` (map fst keywords))
+isKeywords x = (fst (readKeyword x) `elem` (map fst keywords))
 
 
 main = do
