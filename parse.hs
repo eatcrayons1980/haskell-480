@@ -1,5 +1,5 @@
 import System.Environment
-import Data.Char (isAlpha, isAlphaNum, toLower, isDigit, isSpace)
+import Data.Char (isAlphaNum, toLower, isDigit, isSpace)
 
 data Token
         = VarId String
@@ -115,7 +115,7 @@ lexToken l@(x:xs)
     | isOperator x = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
     | isKeywords l = let (string, rest) = readWord l
         in ((map snd (filter ((==string).fst) keywords)) !! 0, rest)
-    | isAlpha x = let (string, rest) = readIdentifier l
+    | isIdentChar x = let (string, rest) = readIdentifier l
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
 
