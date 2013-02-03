@@ -53,5 +53,3 @@ sin x
 cos x
 exp x
 println("hello world")
-
-23.
