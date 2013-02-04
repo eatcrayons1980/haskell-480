@@ -1,3 +1,4 @@
 parse
 parse.o
 parse.hi
+*.out
