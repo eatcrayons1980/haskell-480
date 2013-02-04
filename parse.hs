@@ -2,54 +2,54 @@ import System.Environment
 import Data.Char (isAlpha, toLower, isDigit, isSpace)
 
 data Token
-        = VarId String
-        | IntTok Int
-        | FloatTok Float
-        | StringTok String
-        | BoolTok Bool
+    = VarId String
+    | IntTok Int
+    | FloatTok Float
+    | StringTok String
+    | BoolTok Bool
 
 -- Symbols
 
-        | LeftParen
-        | RightParen
+    | LeftParen
+    | RightParen
 
 -- Operators
 
-        | Minus
-        | Plus
-        | Mod
-        | Carrot
-        | Mult
-        | Div
-        | Equal
-        | Less
+    | Minus
+    | Plus
+    | Mod
+    | Carrot
+    | Mult
+    | Div
+    | Equal
+    | Less
 
 -- Keywords
 
-        | KW_And
-        | KW_Or
-        | KW_Not
-        | KW_Iff
+    | KW_And
+    | KW_Or
+    | KW_Not
+    | KW_Iff
 
-        | KW_Assign
-        | KW_Cos
-        | KW_Exp
-        | KW_If
-        | KW_Let
-        | KW_Logn
-        | KW_PrintLn
-        | KW_Sin
-        | KW_Tan
-        | KW_While
+    | KW_Assign
+    | KW_Cos
+    | KW_Exp
+    | KW_If
+    | KW_Let
+    | KW_Logn
+    | KW_PrintLn
+    | KW_Sin
+    | KW_Tan
+    | KW_While
 
-        | KW_Int
-        | KW_Float
-        | KW_Bool
-        | KW_String        
+    | KW_Int
+    | KW_Float
+    | KW_Bool
+    | KW_String        
 
-        | EOF
-        | Error String
-        deriving (Eq)
+    | EOF
+    | Error String
+    deriving (Eq)
 
 operators :: [(Char,Token)]
 operators = [
@@ -110,9 +110,9 @@ lexToken l@(x:xs)
         in (StringTok string, rs)
     | isDigit x = readNum l
     | isOperator x = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
-    | isKeywords l = let (string, rest) = readKeyword l
+    | isKeywords l = let (string, rest) = readVarChars l
         in ((map snd (filter ((==string).fst) keywords)) !! 0, rest)
-    | isVariable l 0 = let (string, rest) = readVariable l
+    | isVariable l 0 = let (string, rest) = readVarChars l
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
 
@@ -122,47 +122,37 @@ readString xs = span isNotQuote xs
 
 readNum :: String->(Token, String)
 readNum [] = (EOF, [])
-readNum xs = let (i, as) = span isDigit xs
-                in (case as of
-                        ('.':ps) -> let (j, bs) = span isDigit ps
-                                        in (if null j
-                                            then (IntTok (read i::Int), as)
-                                            else (case bs of
-                                                 ('e':'+':es) -> let (k, cs) = span isDigit es in (FloatTok (read (concat [i, ".", j, "e+", k])::Float), cs)
-                                                 ('e':'-':es) -> let (k, cs) = span isDigit es in (FloatTok (read (concat [i, ".", j, "e-", k])::Float), cs)
-                                                 ('e':z:es) -> if (isDigit z)
-                                                                then (let (k, cs) = span isDigit (z:es) in (FloatTok (read (concat [i, ".", j, "e+", k])), cs))
-                                                                else (FloatTok (read (concat [i, ".", j, "e+0"])), (z:es))
-                                                 _ -> (FloatTok (read (concat [i, ".", j])::Float), bs)))
-                        ('e':'+':es) -> let (k, cs) = span isDigit es in (FloatTok (read (concat [i, ".0e+", k])::Float), cs)
-                        ('e':'-':es) -> let (k, cs) = span isDigit es in (FloatTok (read (concat [i, ".0e-", k])::Float), cs)
-                        ('e':z:es) -> if (isDigit z)
-                                            then (let (k, cs) = span isDigit (z:es) in (FloatTok (read (concat [i, ".0e+", k])), cs))
-                                            else (FloatTok (read (concat [i, ".0e+0"])), (z:es))                        
-                        _ -> (IntTok (read i::Int), as))
+readNum xs = let (i, rest0) = span isDigit xs
+    in case rest0 of
+        ('.':ps) -> let (f, rest1) = span isDigit ps
+            in case rest1 of
+                ('e':es) -> let (e, rest2) = readE es
+                    in (FloatTok (read (concat [i, ".", f, e])::Float), rest2)
+                (_) -> (FloatTok (read (concat [i, ".", f])::Float), rest1)
+        ('e':es) -> let (e, rest1) = readE es
+            in (FloatTok (read (concat [i, e])::Float), rest1)
+        (_:es) -> (IntTok (read i::Int), rest0)
 
-readVariable :: String->(String, String)
-readVariable [] = ([], [])
-readVariable xs = span isVarChar xs
+readE :: String->(String, String)
+readE l = case l of
+    ('+':xs) -> let (exp, rest) = span isDigit xs 
+        in ((concat ["e+", exp]), rest)
+    ('-':xs) -> let (exp, rest) = span isDigit xs
+        in ((concat ["e-", exp]), rest)
+    (z:_) -> if (isDigit z)
+        then let (exp, rest) = span isDigit l
+            in ((concat ["e+", exp]), rest)
+        else ("e+0", l)
 
-readKeyword :: String->(String, String)
-readKeyword [] = ([], [])
-readKeyword xs = span isVarChar xs
+readVarChars :: String->(String, String)
+readVarChars [] = ([], [])
+readVarChars xs = span isVarChar xs
 
 isVarChar :: Char -> Bool
-isVarChar x = (isAlpha x || x == '_') 
-
-isFloat :: String->Bool
-isFloat [] = False 
-isFloat l@(x:xs) = case (x == '.') of
-    True -> True
-    False -> isFloat xs
+isVarChar x = (isAlpha x || x == '_')
 
 isNotQuote :: Char -> Bool
 isNotQuote c = (c /= '"')
-
---isDigOrDec :: Char -> Bool
---isDigOrDec c = (c == '.') || isDigit c
 
 isOperator :: Char -> Bool
 isOperator x = x `elem` (map fst operators)
@@ -170,12 +160,12 @@ isOperator x = x `elem` (map fst operators)
 isVariable :: String -> Int -> Bool
 isVariable (x:xs) c
     | isVarChar x = let a = c+1
-                    in isVariable xs a
+        in isVariable xs a
     | (c > 0) = True
     | otherwise = False
 
 isKeywords :: String -> Bool
-isKeywords x = (fst (readKeyword x) `elem` (map fst keywords))
+isKeywords x = (fst (readVarChars x) `elem` (map fst keywords))
 
 main = do
     (fileName1:_) <- getArgs
