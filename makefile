@@ -2,25 +2,27 @@
 # INSTRUCTION
 # Quoted strings are to be filled in by student
 #
-CCC = ghc
-CCFLAGS =
-OBJS =
 SOURCE = parse.hs
+EXE = parse
+CCC = ghc
+CCFLAGS = --make
 RUNFLAGS =
 
-stutest.out:
-	cat $(SOURCE)
-	$(CCC) $(RUNFLAGS) $(SOURCE) 
+default: compiler
+
+compiler:
+	$(CCC) $(CCFLAGS) $(SOURCE) -o $(EXE)
 
 clean:
-	rm parse.o parse.hi parse
+	rm -f ./*.hi ./*.o ./*.out $(EXE) core
 	ls
 
-# Notice the next line. The `-' says to ignore the return code. This
-# is a way to have multiple tests of errors that cause non-zero return
-# codes.
+stutest.out: compiler
+	cat stutest1.in
+	-$(EXE) $(RUNFLAGS) stutest1.in > stutest1.out
+	cat stutest1.out
 
-#proftest.out: compiler
-#	cat $(PROFTEST)
-#	compiler $(PROFTEST) > proftest.out
-#	cat proftest.out
+proftest.out: compiler
+	cat $(PROFTEST)
+	$(EXE) $(PROFTEST) > proftest.out
+	cat proftest.out
