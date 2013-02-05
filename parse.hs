@@ -153,12 +153,13 @@ readNum xs = let (i, rest0) = span isDigit xs
                 (_) -> (FloatTok (read (concat [i, ".", f])::Float), rest1)
         ('e':es) -> let (e, rest1) = readE es
             in (FloatTok (read (concat [i, e])::Float), rest1)
-        (_:es) -> (IntTok (read i::Int), rest0)
+        _ -> (IntTok (read i::Int), rest0)
 
 -- |'readE' reads the exponent
 -- value off the beginning of
 -- a string.
 readE :: String->(String, String)
+readE [] = ([], [])
 readE l = case l of
     ('+':xs) -> let (exp, rest) = span isDigit xs 
         in ((concat ["e+", exp]), rest)
@@ -168,6 +169,7 @@ readE l = case l of
         then let (exp, rest) = span isDigit l
             in ((concat ["e+", exp]), rest)
         else ("e+0", l)
+    _ -> ("e+0", l)
 
 -- |'readVarChar' splits a string
 -- at the end of a variable name.
