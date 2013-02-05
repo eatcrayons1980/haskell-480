@@ -89,37 +89,59 @@ keywords = [
     ( "false", BoolTok False)
     ]
 
-removeWhiteSpace :: [Char] -> [Char]
+-- |'lexer' is the main tokenizing
+-- function. It takes a string and
+-- transforms it into a list of
+-- tokens.
+lexer :: String->[Token]
+lexer xs = let s = removeWhiteSpace xs
+    in lexer' s
+
+-- |Called by 'lexer' as a sister
+-- function.
+lexer' [] = [EOF]
+lexer' xs = let (t, rest) = lexToken xs
+    in (t:lexer rest)
+
+-- |'removeWhiteSpace' takes a string
+-- and strips off preceding whitespace.
+removeWhiteSpace :: String -> String
 removeWhiteSpace [] = []
 removeWhiteSpace l@(x:xs) = case isSpace x of
     True -> removeWhiteSpace xs
     False -> l
 
-lexer :: String->[Token]
-lexer xs = let s = removeWhiteSpace xs
-    in lexer' s
-
-lexer' [] = [EOF]
-lexer' xs = let (t, rest) = lexToken xs
-    in (t:lexer rest)
-
+-- |'lexToken' determines the first
+-- token on the string. The prefix
+-- matching the token is removed.
+-- The token and the remainder of the
+-- string is returned.
 lexToken :: String->(Token, String)
 lexToken [] = (EOF, [])
 lexToken l@(x:xs)
-    | (x == '"') = let (string, rest@(r:rs)) = readString xs
-        in (StringTok string, rs)
+    | (x == '"') = let (string, rest) = readString l
+        in (StringTok string, rest)
     | isDigit x = readNum l
     | isOperator x = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
     | isKeywords l = let (string, rest) = readVarChars l
         in ((map snd (filter ((==string).fst) keywords)) !! 0, rest)
-    | isVariable l 0 = let (string, rest) = readVarChars l
+    | isVarChar x = let (string, rest) = readVarChars l
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
 
+-- |'readString' takes in as input
+-- a string with a double quoted
+-- string prefix. Strips the quotes
+-- and returns the quoted string
+-- and the remainder of the string.
 readString :: String->(String, String)
 readString [] = ([], [])
-readString xs = span isNotQuote xs
+readString l@(x:xs) = let (quote, rest) = span isNotQuote xs
+    in (quote, tail rest)
 
+-- |'readNum' takes a string and
+-- returns an IntTok or FloatTok
+-- token and the rest of the string.
 readNum :: String->(Token, String)
 readNum [] = (EOF, [])
 readNum xs = let (i, rest0) = span isDigit xs
@@ -133,6 +155,9 @@ readNum xs = let (i, rest0) = span isDigit xs
             in (FloatTok (read (concat [i, e])::Float), rest1)
         (_:es) -> (IntTok (read i::Int), rest0)
 
+-- |'readE' reads the exponent
+-- value off the beginning of
+-- a string.
 readE :: String->(String, String)
 readE l = case l of
     ('+':xs) -> let (exp, rest) = span isDigit xs 
@@ -144,29 +169,40 @@ readE l = case l of
             in ((concat ["e+", exp]), rest)
         else ("e+0", l)
 
+-- |'readVarChar' splits a string
+-- at the end of a variable name.
 readVarChars :: String->(String, String)
 readVarChars [] = ([], [])
 readVarChars xs = span isVarChar xs
 
+-- |'isVarChar' returns true if
+-- the input character is a letter
+-- number or underscore.
 isVarChar :: Char -> Bool
-isVarChar x = (isAlpha x || x == '_')
+isVarChar x = (isAlpha x || isDigit x || x == '_')
 
+-- |'isNotQuote' returns true if
+-- the input character is anything
+-- other than a double quote.
 isNotQuote :: Char -> Bool
 isNotQuote c = (c /= '"')
 
+-- |'isOperator' returns true if
+-- the input character is an element
+-- of the 'operators' list.
 isOperator :: Char -> Bool
 isOperator x = x `elem` (map fst operators)
 
-isVariable :: String -> Int -> Bool
-isVariable (x:xs) c
-    | isVarChar x = let a = c+1
-        in isVariable xs a
-    | (c > 0) = True
-    | otherwise = False
-
+-- |'isKeywords' returns true if
+-- the input string matches an
+-- element of the 'keywords' list.
 isKeywords :: String -> Bool
 isKeywords x = (fst (readVarChars x) `elem` (map fst keywords))
 
+{- Main
+ - Takes a filename as an argument
+ - for scanning and returns a list
+ - of tokens. -}
 main = do
     (fileName1:_) <- getArgs
     printWords fileName1
@@ -176,6 +212,7 @@ printWords source = do
     contents <- readFile source
     mapM_ putStrLn (map show (lexer contents))
 
+{- Show definitions for Tokens -}
 instance Show Token where
     show (VarId x)     = "Variable:   "++show x
     show (IntTok x)    = "Integer:    "++show x
