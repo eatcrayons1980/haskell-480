@@ -161,15 +161,16 @@ readNum xs = let (i, rest0) = span isDigit xs
 readE :: String->(String, String)
 readE [] = ([], [])
 readE l = case l of
-    ('+':xs) -> let (exp, rest) = span isDigit xs 
-        in ((concat ["e+", exp]), rest)
-    ('-':xs) -> let (exp, rest) = span isDigit xs
-        in ((concat ["e-", exp]), rest)
-    (z:_) -> if (isDigit z)
-        then let (exp, rest) = span isDigit l
-            in ((concat ["e+", exp]), rest)
-        else ("e+0", l)
-    _ -> ("e+0", l)
+    (x:y:zs) -> 
+        if ((x `elem` "+-") && (isDigit y))
+            then let (exp, rest) = span isDigit (y:zs) 
+                in (("e" ++ [x] ++ exp), rest)
+        else if  isDigit x
+            then let (exp, rest) = span isDigit (x:y:zs)
+                in (("e+" ++ exp), rest)
+        else ("e+0", (x:y:zs))
+    (x:zs) -> readE (l ++ " ")
+    (zs) -> readE (l ++ "  ")
 
 -- |'readVarChar' splits a string
 -- at the end of a variable name.
