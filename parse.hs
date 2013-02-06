@@ -170,8 +170,8 @@ readNum xs = let (i, rest0) = span isDigit xs
         ('.':ps) -> let (f, rest1) = span isDigit ps
             in case rest1 of
                 ('e':es) -> let (e, rest2) = readE rest1
-                    in (FloatTok (read (concat [i, ".", f, e])::Float), rest2)
-                (_) -> (FloatTok (read (concat [i, ".", f])::Float), rest1)
+                    in (FloatTok (read (i++"."++f++e)::Float), rest2)
+                (_) -> (FloatTok (read (i++"."++f)::Float), rest1)
         ('e':es) -> let (e, rest1) = readE rest0
             in (FloatTok (read (concat [i, e])::Float), rest1)
         _ -> (IntTok (read i::Int), rest0)
@@ -187,6 +187,7 @@ readE [] = ([], [])
 readE (x:[]) = ("e+0",[])
 readE (x:y:[])
     | isDigit y = ("e+"++[y],[])
+    | isSpace y = ("e+",[y])
     | otherwise = ([],[x,y])
 readE (x:y:z:[])
     | isDigit y && isDigit z = ("e+"++[y,z],[])
@@ -197,7 +198,7 @@ readE (x:y:z:xs)
         in (("e+"++exp),rest)
     | y `elem` "+-" && isDigit z = let (exp, rest) = span isDigit (z:xs)
         in (([x,y]++exp),rest)
-    | otherwise = ([],(x:y:z:xs))
+    | otherwise = ("e+0",(y:z:xs))
 
 
 {----------------------------------------------------
