@@ -169,12 +169,12 @@ readE (x:y:z:[])
     | isDigit y && isDigit z = ("e+"++[y,z],[])
     | y `elem` "+-" && isDigit z = ([x,y,z],[])
     | otherwise = ([],[x,y,z])
-readE (x:y:z:s)
-    | isDigit y = let (exp, rest) = span isDigit (y:z:s)
+readE (x:y:z:xs)
+    | isDigit y = let (exp, rest) = span isDigit (y:z:xs)
         in (("e+"++exp),rest)
-    | y `elem` "+-" && isDigit z = let (exp, rest) = span isDigit (y:z:s)
+    | y `elem` "+-" && isDigit z = let (exp, rest) = span isDigit (z:xs)
         in (([x,y]++exp),rest)
-    | otherwise = ([],(x:y:z:s))
+    | otherwise = ([],(x:y:z:xs))
 
 -- |'readVarChar' splits a string
 -- at the end of a variable name.
