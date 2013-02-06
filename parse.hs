@@ -1,7 +1,7 @@
-{-
+{----------------------------------------------------
     CS480 - IBTL Compiler
     Authors: Kevin Tang, Kyle Mannari, Paul Freeman
--}
+-----------------------------------------------------}
 
 import System.Environment
 import Data.Char (isAlpha, toLower, isDigit, isSpace)
@@ -94,33 +94,41 @@ keywords = [
     ( "false", BoolTok False)
     ]
 
-{-  lexer:
+{----------------------------------------------------
+    lexer:
     Is the main tokenizing function. It takes a
     string and transforms it into a list of
-    tokens. -}
+    tokens.
+-----------------------------------------------------}
 lexer :: String->[Token]
 lexer xs = let s = removeWhiteSpace xs
     in lexer' s
 
-{-  lexer':
-    Called by 'lexer' as a sister function. -}
+{----------------------------------------------------
+    lexer':
+    Called by 'lexer' as a sister function.
+-----------------------------------------------------}
 lexer' [] = [EOF]
 lexer' xs = let (t, rest) = lexToken xs
     in (t:lexer rest)
 
-{-  removeWhiteSpace:
+{----------------------------------------------------
+    removeWhiteSpace:
     takes a string and strips off preceding
-    whitespace. -}
+    whitespace.
+-----------------------------------------------------}
 removeWhiteSpace :: String -> String
 removeWhiteSpace [] = []
 removeWhiteSpace l@(x:xs) = case isSpace x of
     True -> removeWhiteSpace xs
     False -> l
 
-{-  lexToken:   
-    Determines the first token on the string. The prefix
-    matching the token is removed. The token and the
-    remainder of the string is returned. -}
+{----------------------------------------------------
+    lexToken:   
+    Determines the first token on the string. The
+    prefix matching the token is removed. The token
+    and the remainder of the string is returned.
+-----------------------------------------------------}
 lexToken :: String->(Token, String)
 lexToken [] = (EOF, [])
 lexToken l@(x:xs)
@@ -134,18 +142,22 @@ lexToken l@(x:xs)
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
 
-{-  readString:
-    Takes in as input a string with a double quoted string
-    prefix. Strips the quotes and returns the quoted string
-    and the remainder of the string. -}
+{----------------------------------------------------
+    readString:
+    Takes in as input a string with a double quoted
+    string prefix. Strips the quotes and returns the
+    quoted string and the remainder of the string.
+-----------------------------------------------------}
 readString :: String->(String, String)
 readString [] = ([], [])
 readString l@(x:xs) = let (quote, rest) = span isNotQuote xs
     in (quote, tail rest)
 
-{-  readNum:
-    Takes a string and returns an IntTok or FloatTok token
-    and the rest of the string. -}
+{----------------------------------------------------
+    readNum:
+    Takes a string and returns an IntTok or FloatTok
+    token and the rest of the string.
+-----------------------------------------------------}
 readNum :: String->(Token, String)
 readNum [] = (EOF, [])
 readNum xs = let (i, rest0) = span isDigit xs
@@ -159,9 +171,11 @@ readNum xs = let (i, rest0) = span isDigit xs
             in (FloatTok (read (concat [i, e])::Float), rest1)
         _ -> (IntTok (read i::Int), rest0)
 
-{-  readE:
-    Reads the exponent value off the beginning of a string.
-    String should begin with 'e'. -}
+{----------------------------------------------------
+    readE:
+    Reads the exponent value off the beginning of a
+    string. String should begin with 'e'.
+-----------------------------------------------------}
 readE :: String->(String, String)
 readE [] = ([], [])
 readE (x:[]) = ("e+0",[])
@@ -179,52 +193,67 @@ readE (x:y:z:xs)
         in (([x,y]++exp),rest)
     | otherwise = ([],(x:y:z:xs))
 
-{-  readVarChar:
-    Splits a string at the end of a 
-    variable name. -}
+{----------------------------------------------------
+    readVarChar:
+    Splits a string at the end of a variable name.
+-----------------------------------------------------}
 readVarChars :: String->(String, String)
 readVarChars [] = ([], [])
 readVarChars xs = span isVarChar xs
 
-{-  isVarChar:
-    Returns true if the input character is a letter number
-    or underscore. -}
+{----------------------------------------------------
+    isVarChar:
+    Returns true if the input character is a letter
+    number or underscore.
+-----------------------------------------------------}
 isVarChar :: Char -> Bool
 isVarChar x = (isAlpha x || isDigit x || x == '_')
 
-{-  isNotQuote:
-    returns true if the input character is anything other
-    than a double quote. -}
+{----------------------------------------------------
+    isNotQuote:
+    returns true if the input character is anything
+    other than a double quote.
+-----------------------------------------------------}
 isNotQuote :: Char -> Bool
 isNotQuote c = (c /= '"')
 
-{-  isOperator:
+{----------------------------------------------------
+    isOperator:
     Returns true if the input character is an element
-    of the 'operators' list. -}
+    of the 'operators' list.
+-----------------------------------------------------}
 isOperator :: Char -> Bool
 isOperator x = x `elem` (map fst operators)
 
-{-  isKeywords:
-    Returns true if the input string matches an element
-    of the 'keywords' list. -}
+{----------------------------------------------------
+    isKeywords:
+    Returns true if the input string matches an
+    element of the 'keywords' list.
+-----------------------------------------------------}
 isKeywords :: String -> Bool
 isKeywords x = (fst (readVarChars x) `elem` (map fst keywords))
 
-{-  Main:
+{----------------------------------------------------
+    Main:
     Takes a filename as an argument for scanning and
-    returns a list of tokens. -}
+    returns a list of tokens.
+-----------------------------------------------------}
 main = do
     (fileName1:_) <- getArgs
     printWords fileName1
 
-{-  printWords:
-    Display driver for our token list. -}
+{----------------------------------------------------
+    printWords:
+    Display driver for our token list.
+-----------------------------------------------------}
 printWords :: FilePath -> IO ()
 printWords source = do
     contents <- readFile source
     mapM_ putStrLn (map show (lexer contents))
 
-{- Show definitions for Tokens -}
+{----------------------------------------------------
+    Show definitions for Tokens
+-----------------------------------------------------}
 instance Show Token where
     show (VarId x)     = "Variable:   "++show x
     show (IntTok x)    = "Integer:    "++show x

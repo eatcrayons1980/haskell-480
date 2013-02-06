@@ -21,6 +21,9 @@ stutest.out: compiler
 	cat stutest1.in
 	-$(EXE) $(RUNFLAGS) stutest1.in > stutest1.out
 	cat stutest1.out
+	cat stutest2.in
+	-$(EXE) $(RUNFLAGS) stutest2.in > stutest2.out
+	cat stutest2.out
 
 proftest.out: compiler
 	cat $(PROFTEST)
