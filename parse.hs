@@ -104,6 +104,7 @@ lexer :: String->[Token]
 lexer xs = let s = removeWhiteSpace xs
     in lexer' s
 
+
 {----------------------------------------------------
     lexer':
     Called by 'lexer' as a sister function.
@@ -111,6 +112,7 @@ lexer xs = let s = removeWhiteSpace xs
 lexer' [] = [EOF]
 lexer' xs = let (t, rest) = lexToken xs
     in (t:lexer rest)
+
 
 {----------------------------------------------------
     removeWhiteSpace:
@@ -122,6 +124,7 @@ removeWhiteSpace [] = []
 removeWhiteSpace l@(x:xs) = case isSpace x of
     True -> removeWhiteSpace xs
     False -> l
+
 
 {----------------------------------------------------
     lexToken:   
@@ -142,6 +145,7 @@ lexToken l@(x:xs)
         in (VarId string, rest)
     | otherwise = (Error "Unknown character", xs)
 
+
 {----------------------------------------------------
     readString:
     Takes in as input a string with a double quoted
@@ -152,6 +156,7 @@ readString :: String->(String, String)
 readString [] = ([], [])
 readString l@(x:xs) = let (quote, rest) = span isNotQuote xs
     in (quote, tail rest)
+
 
 {----------------------------------------------------
     readNum:
@@ -170,6 +175,7 @@ readNum xs = let (i, rest0) = span isDigit xs
         ('e':es) -> let (e, rest1) = readE rest0
             in (FloatTok (read (concat [i, e])::Float), rest1)
         _ -> (IntTok (read i::Int), rest0)
+
 
 {----------------------------------------------------
     readE:
@@ -193,6 +199,7 @@ readE (x:y:z:xs)
         in (([x,y]++exp),rest)
     | otherwise = ([],(x:y:z:xs))
 
+
 {----------------------------------------------------
     readVarChar:
     Splits a string at the end of a variable name.
@@ -200,6 +207,7 @@ readE (x:y:z:xs)
 readVarChars :: String->(String, String)
 readVarChars [] = ([], [])
 readVarChars xs = span isVarChar xs
+
 
 {----------------------------------------------------
     isVarChar:
@@ -209,6 +217,7 @@ readVarChars xs = span isVarChar xs
 isVarChar :: Char -> Bool
 isVarChar x = (isAlpha x || isDigit x || x == '_')
 
+
 {----------------------------------------------------
     isNotQuote:
     returns true if the input character is anything
@@ -216,6 +225,7 @@ isVarChar x = (isAlpha x || isDigit x || x == '_')
 -----------------------------------------------------}
 isNotQuote :: Char -> Bool
 isNotQuote c = (c /= '"')
+
 
 {----------------------------------------------------
     isOperator:
@@ -225,6 +235,7 @@ isNotQuote c = (c /= '"')
 isOperator :: Char -> Bool
 isOperator x = x `elem` (map fst operators)
 
+
 {----------------------------------------------------
     isKeywords:
     Returns true if the input string matches an
@@ -232,6 +243,7 @@ isOperator x = x `elem` (map fst operators)
 -----------------------------------------------------}
 isKeywords :: String -> Bool
 isKeywords x = (fst (readVarChars x) `elem` (map fst keywords))
+
 
 {----------------------------------------------------
     Main:
@@ -242,6 +254,7 @@ main = do
     (fileName1:_) <- getArgs
     printWords fileName1
 
+
 {----------------------------------------------------
     printWords:
     Display driver for our token list.
@@ -250,6 +263,7 @@ printWords :: FilePath -> IO ()
 printWords source = do
     contents <- readFile source
     mapM_ putStrLn (map show (lexer contents))
+
 
 {----------------------------------------------------
     Show definitions for Tokens
