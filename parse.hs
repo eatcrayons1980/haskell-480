@@ -215,7 +215,7 @@ readVarChars xs = span isVarChar xs
     number or underscore.
 -----------------------------------------------------}
 isVarChar :: Char -> Bool
-isVarChar x = (isAlpha x || isDigit x || x == '_')
+isVarChar x = (isAlpha x || x == '_')
 
 
 {----------------------------------------------------

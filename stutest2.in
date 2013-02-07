@@ -12,7 +12,11 @@ inco,rrect
 sin cos tan log
 sincostanlog
 
+e
+
 exp 
+exp(
+exp (
 let 
 assign
 if
@@ -41,3 +45,16 @@ bool
 
 + * / - % ^
 
+
+int x (float y) (
+    bool flag = true
+    int z = y
+    while(flag) (
+         println("this is a string")
+         
+         if (z < 10)(z = z + 1)(flag = false)
+                 
+         int temp = y * z % 10 + 3.14157
+         println(temp)
+    )
+)
