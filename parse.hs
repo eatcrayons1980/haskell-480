@@ -172,9 +172,13 @@ readNum xs = let (i, rest0) = span isDigit xs
                 ('e':es) -> let (e, rest2) = readE rest1
                     in (FloatTok (read (i++"."++f++e)::Float), rest2)
                 (_) -> (FloatTok (read (i++"."++f)::Float), rest1)
-        ('e':es) -> let (e, rest1) = readE rest0
+        ('e':[]) -> let (e, rest1) = readE rest0
             in (FloatTok (read (concat [i, e])::Float), rest1)
-        _ -> (IntTok (read i::Int), rest0)
+        ('e':es) -> if isAlpha (head es)
+            then (IntTok (read i::Int), rest0)
+            else let (e, rest1) = readE rest0
+                in (FloatTok (read (concat [i, e])::Float), rest1)
+        (_) -> (IntTok (read i::Int), rest0)
 
 
 {----------------------------------------------------
