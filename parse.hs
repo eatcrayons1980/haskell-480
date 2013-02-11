@@ -2,9 +2,8 @@
     CS480 - IBTL Compiler
     Authors: Kevin Tang, Kyle Mannari, Paul Freeman
 -----------------------------------------------------}
-
 import System.Environment
-import Data.Char (isAlpha, toLower, isDigit, isSpace)
+import Data.Char (isAlpha, isDigit, isSpace)
 
 data Token
     = VarId String
@@ -109,6 +108,7 @@ lexer xs = let s = removeWhiteSpace xs
     lexer':
     Called by 'lexer' as a sister function.
 -----------------------------------------------------}
+lexer' ::  String -> [Token]
 lexer' [] = [EOF]
 lexer' xs = let (t, rest) = lexToken xs
     in (t:lexer rest)
@@ -135,28 +135,19 @@ removeWhiteSpace l@(x:xs) = case isSpace x of
 lexToken :: String->(Token, String)
 lexToken [] = (EOF, [])
 lexToken l@(x:xs)
-    | (x == '"') = let (string, rest) = readString l
-        in (StringTok string, rest)
+    | isQuote = let (string, rest) = span (/='"') xs
+                    in (StringTok string, tail rest)
+    | isOperator = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
+    | isKeyword = ((map snd (filter ((==first).fst) keywords)) !! 0, rest)
     | isDigit x = readNum l
-    | isOperator x = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
-    | isKeywords l = let (string, rest) = readVarChars l
-        in ((map snd (filter ((==string).fst) keywords)) !! 0, rest)
-    | isVarChar x = let (string, rest) = readVarChars l
-        in (VarId string, rest)
+    | isVariable = (VarId first, rest)
     | otherwise = (Error "Unknown character", xs)
-
-
-{----------------------------------------------------
-    readString:
-    Takes in as input a string with a double quoted
-    string prefix. Strips the quotes and returns the
-    quoted string and the remainder of the string.
------------------------------------------------------}
-readString :: String->(String, String)
-readString [] = ([], [])
-readString l@(x:xs) = let (quote, rest) = span isNotQuote xs
-    in (quote, tail rest)
-
+    where
+        isQuote = x=='"'
+        isOperator = x `elem` (map fst operators)
+        isVariable = (isAlpha x || x=='_')
+        isKeyword = first `elem` (map fst keywords)
+        (first, rest) = span (\x->isAlpha x || x=='_') l
 
 {----------------------------------------------------
     readNum:
@@ -206,52 +197,6 @@ readE (x:y:z:xs)
     | isSpace y = ("e+0",(z:xs))
     | otherwise = ("e+0",(y:z:xs))
 
-
-{----------------------------------------------------
-    readVarChar:
-    Splits a string at the end of a variable name.
------------------------------------------------------}
-readVarChars :: String->(String, String)
-readVarChars [] = ([], [])
-readVarChars xs = span isVarChar xs
-
-
-{----------------------------------------------------
-    isVarChar:
-    Returns true if the input character is a letter
-    number or underscore.
------------------------------------------------------}
-isVarChar :: Char -> Bool
-isVarChar x = (isAlpha x || x == '_')
-
-
-{----------------------------------------------------
-    isNotQuote:
-    returns true if the input character is anything
-    other than a double quote.
------------------------------------------------------}
-isNotQuote :: Char -> Bool
-isNotQuote c = (c /= '"')
-
-
-{----------------------------------------------------
-    isOperator:
-    Returns true if the input character is an element
-    of the 'operators' list.
------------------------------------------------------}
-isOperator :: Char -> Bool
-isOperator x = x `elem` (map fst operators)
-
-
-{----------------------------------------------------
-    isKeywords:
-    Returns true if the input string matches an
-    element of the 'keywords' list.
------------------------------------------------------}
-isKeywords :: String -> Bool
-isKeywords x = (fst (readVarChars x) `elem` (map fst keywords))
-
-
 {----------------------------------------------------
     Main:
     Takes a filename as an argument for scanning and
@@ -269,7 +214,7 @@ main = do
 printWords :: FilePath -> IO ()
 printWords source = do
     contents <- readFile source
-    mapM_ putStrLn (map show (lexer contents))
+    mapM_ putStrLn (map show $ lexer contents)
 
 
 {----------------------------------------------------
