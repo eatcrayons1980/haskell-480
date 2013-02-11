@@ -149,6 +149,9 @@ lexToken l@(x:xs)
         isKeyword = first `elem` (map fst keywords)
         (first, rest) = span (\x->isAlpha x || x=='_') l
 
+-- We can merge all of the "is" prefixed variables in where into the guards
+-- but I left it for readability.
+
 {----------------------------------------------------
     readNum:
     Takes a string and returns an IntTok or FloatTok
