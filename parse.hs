@@ -147,7 +147,7 @@ lexToken l@(x:xs)
         isOperator = x `elem` (map fst operators)
         isVariable = (isAlpha x || x=='_')
         isKeyword = first `elem` (map fst keywords)
-        (first, rest) = span (\x->isAlpha x || x=='_') l
+        (first, rest) = span (\x->isAlpha x || isDigit x || x=='_') l
 
 -- We can merge all of the "is" prefixed variables in where into the guards
 -- but I left it for readability.
