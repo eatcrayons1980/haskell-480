@@ -2,8 +2,8 @@
 # INSTRUCTION
 # Quoted strings are to be filled in by student
 #
-SOURCE = scanner.hs
-EXE = scanner
+SOURCE = Parser.hs
+EXE = parser
 CCC = ghc
 CCFLAGS = --make
 RUNFLAGS =
