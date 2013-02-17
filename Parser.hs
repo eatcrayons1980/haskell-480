@@ -29,10 +29,36 @@ parseRightParen
                        RightParen -> Just RightParen
                        other      -> Nothing)
 
-parens :: OurParser ()
-parens = do{ parseLeftParen
-           ; parens
-           ; parseRightParen
-           ; parens
-           }
-        <|> return ()
+parseEOF :: OurParser Token
+parseEOF 
+  = mytoken (\tok -> case tok of 
+                       EOF        -> Just EOF
+                       other      -> Nothing)
+
+parseAtom :: OurParser Token
+parseAtom 
+  = mytoken (\tok -> case tok of 
+                       EOF        -> Nothing
+                       LeftParen  -> Nothing
+                       RightParen -> Nothing
+                       other      -> Just tok)
+
+{- OUR GRAMMAR -}
+
+f :: OurParser Token
+f = do{ parseEOF <?> "end of file" }
+    <|> do{ t ; f }
+
+t :: OurParser Token
+t = do{ parseLeftParen <?> "("; s ; parseRightParen <?> ")"}
+
+s :: OurParser Token
+s = do{ parseLeftParen <?> "("; a }
+    <|> do{ parseAtom <?> "atom"; b }
+
+a :: OurParser Token
+a = do{ parseRightParen <?> ")"; b }
+    <|> do{ s ; parseRightParen <?> ")"; b }
+
+b :: OurParser Token
+b = s <|> return Epsilon
