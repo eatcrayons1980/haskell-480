@@ -1,34 +1,38 @@
+module Parser where
+
 import Scanner
 import Text.ParserCombinators.Parsec
+import Text.ParserCombinators.Parsec.Pos
 
-type ourParser a :: GenParser Token () a
+type OurParser a = GenParser Token () a
 
-mytoken :: Show t => t -> GenParser ((Int,Int),t) () t
-mytoken x
+mytoken :: (Token -> Maybe a) -> OurParser a
+mytoken test
   = token showTok posFromTok testTok
   where
     showTok t           = show t
-    posFromTok t        = 0
-    testTok t           = if (x == t) then Just t else Nothing
+    posFromTok t        = noPos
+    testTok t           = test t
 
-parseLeftParen :: ourParse String
+noPos :: SourcePos
+noPos = newPos "" 0 0
+
+parseLeftParen :: OurParser Token
 parseLeftParen 
   = mytoken (\tok -> case tok of 
-                       LeftParen  -> Just "("
+                       LeftParen  -> Just LeftParen
                        other      -> Nothing)
 
-parseRightParen :: ourParse String
+parseRightParen :: OurParser Token
 parseRightParen 
   = mytoken (\tok -> case tok of 
-                       RightParen -> Just ")"
+                       RightParen -> Just RightParen
                        other      -> Nothing)
 
-parens  :: Parser ()
-parens  = do{ parseLeftParen
-            ; parens
-            ; parseRightParen
-            ; parens
-            }
+parens :: OurParser ()
+parens = do{ parseLeftParen
+           ; parens
+           ; parseRightParen
+           ; parens
+           }
         <|> return ()
-
-main = do putStrLn "Hello"
