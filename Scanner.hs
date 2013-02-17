@@ -4,7 +4,7 @@
 -----------------------------------------------------}
 module Scanner where
 
-import System.Environment
+--import System.Environment
 import Data.Char (isAlpha, isDigit, isSpace)
 
 data Token
@@ -216,12 +216,12 @@ main = do
 {----------------------------------------------------
     printWords:
     Display driver for our token list.
------------------------------------------------------}
+
 printWords :: FilePath -> IO ()
 printWords source = do
     contents <- readFile source
     mapM_ putStrLn (map show $ lexer contents)
-
+-----------------------------------------------------}
 
 {----------------------------------------------------
     Show definitions for Tokens

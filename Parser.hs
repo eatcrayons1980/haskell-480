@@ -1,5 +1,6 @@
-module Parser where
+module Main where
 
+import System.Environment
 import Scanner
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Pos
@@ -43,8 +44,14 @@ parseAtom
                        RightParen -> Nothing
                        other      -> Just tok)
 
-{- OUR GRAMMAR -}
+{- OUR GRAMMAR 
 
+    F->TF|<EOF>
+    T->(S)
+    S->(A|atomB
+    A->)B|S)B
+    B->S|Empty  
+-}
 f :: OurParser Token
 f = do{ parseEOF <?> "end of file" }
     <|> do{ t ; f }
@@ -62,3 +69,9 @@ a = do{ parseRightParen <?> ")"; b }
 
 b :: OurParser Token
 b = s <|> return Epsilon
+
+
+main = do
+    (fileName1:_) <- getArgs
+    contents <- readFile fileName1
+    parseTest f $ lexer contents
