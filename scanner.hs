@@ -2,6 +2,8 @@
     CS480 - IBTL Compiler
     Authors: Kevin Tang, Kyle Mannari, Paul Freeman
 -----------------------------------------------------}
+module Scanner where
+
 import System.Environment
 import Data.Char (isAlpha, isDigit, isSpace)
 
@@ -204,10 +206,10 @@ readE (x:y:z:xs)
     Main:
     Takes a filename as an argument for scanning and
     returns a list of tokens.
------------------------------------------------------}
 main = do
     (fileName1:_) <- getArgs
     printWords fileName1
+-----------------------------------------------------}
 
 
 {----------------------------------------------------
