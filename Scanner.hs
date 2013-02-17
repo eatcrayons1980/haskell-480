@@ -54,6 +54,7 @@ data Token
     | KW_String        
 
     | EOF
+    | Epsilon
     | Error String
     deriving (Eq)
 
