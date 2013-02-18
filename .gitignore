@@ -1,4 +1,6 @@
-parse
-parse.o
-parse.hi
+parser
+Parser.o
+Parser.hi
+Scanner.o
+Scanner.hi
 *.out
