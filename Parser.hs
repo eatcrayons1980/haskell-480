@@ -3,14 +3,16 @@ module Main where
 import System.Environment
 import Scanner
 import Text.Parsec
-import Text.ParserCombinators.Parsec
-import Text.ParserCombinators.Parsec.Pos
-import Control.Monad.IO.Class
+import Text.Parsec.Pos
+import Text.Parsec.String
+--import Text.ParserCombinators.Parsec
+--import Text.ParserCombinators.Parsec.Pos
+--import Control.Monad.IO.Class
 
---type OurParser a = GenParser Token () a
-type OurParser a = ParsecT [Token] () IO a
+type OurParser a b = GenParser Token a b
+--type OurParser a = ParsecT [Token] () IO a
 
-mytoken :: (Token -> Maybe a) -> OurParser a
+mytoken :: (Token -> Maybe a) -> OurParser n a
 mytoken test = tokenPrim show update_pos test
 
 update_pos :: SourcePos -> Token -> [Token] -> SourcePos
@@ -20,31 +22,40 @@ update_pos pos _ [] = noPos
 noPos :: SourcePos
 noPos = newPos "" 0 0
 
-parseLeftParen :: OurParser Token
+parseLeftParen :: OurParser Int String
 parseLeftParen 
-  = mytoken (\tok -> case tok of 
-                       LeftParen  -> Just LeftParen
-                       other      -> Nothing)
+  = do{ i <- getState
+      ; mytoken (\tok -> case tok of 
+                       LeftParen  -> Just ((indent i) ++ "(\n")
+                       other      -> Nothing) }
 
-parseRightParen :: OurParser Token
+parseRightParen :: OurParser Int String
 parseRightParen 
-  = mytoken (\tok -> case tok of 
-                       RightParen -> Just RightParen
-                       other      -> Nothing)
+  = do{ i <- getState
+      ; mytoken (\tok -> case tok of 
+                       RightParen -> Just ((indent i) ++ ")\n")
+                       other      -> Nothing) }
 
-parseEOF :: OurParser Token
+parseEOF :: OurParser Int String
 parseEOF 
   = mytoken (\tok -> case tok of 
-                       EOF        -> Just EOF
+                       EOF        -> Just "<EOF>\n"
                        other      -> Nothing)
 
-parseAtom :: OurParser Token
+parseAtom :: OurParser Int String
 parseAtom 
-  = mytoken (\tok -> case tok of 
+  = do{ i <- getState
+      ; mytoken (\tok -> case tok of 
                        EOF        -> Nothing
                        LeftParen  -> Nothing
                        RightParen -> Nothing
-                       other      -> Just tok)
+                       VarId x    -> Just ((indent i) ++ (show x) ++ "\n")
+                       IntTok x   -> Just ((indent i) ++ (show x) ++ "\n")
+                       FloatTok x -> Just ((indent i) ++ (show x) ++ "\n")
+                       StringTok x-> Just ((indent i) ++ (show x) ++ "\n")
+                       BoolTok x  -> Just ((indent i) ++ (show x) ++ "\n")
+                       Scanner.Error x -> Just ((indent i) ++ (show x) ++ "\n")
+                       other      -> Just ((indent i) ++ (show tok) ++ "\n")) }
 
 {- OUR GRAMMAR 
 
@@ -54,26 +65,55 @@ parseAtom
     A->)B|S)B
     B->S|Empty  
 -}
-f :: OurParser Token
-f = do{ t ; f }
-    <|> do{ x <- parseEOF <?> "end of file" ; liftIO $ putStrLn "Done" ; return x }
+f :: OurParser Int String
+f = do{ x <- t
+      ; y <- f
+      ; return (x ++ y) }
+    <|>
+    do{ x <- parseEOF <?> "end of file"
+      ; return x }
 
-t :: OurParser Token
-t = do{ parseLeftParen <?> "("; liftIO (putStrLn "(") ; s ; x <- parseRightParen <?> ")" ; liftIO (putStrLn ")") ; return x }
+t :: OurParser Int String
+t = do{ x <- parseLeftParen <?> "("
+      ; updateState (4+)
+      ; y <- s
+      ; updateState (subtract 4)
+      ; z <- parseRightParen <?> ")"
+      ; return (x ++ y ++ z) }
 
-s :: OurParser Token
-s = do{ parseLeftParen <?> "("; liftIO (putStrLn "(") ; a }
-    <|> do{ x <- parseAtom <?> "atom"; liftIO (putStrLn $ show x) ; b }
+s :: OurParser Int String
+s = do{ x <- parseLeftParen <?> "("
+      ; updateState (4+)
+      ; y <- a
+      ; return (x ++ y) }
+    <|>
+    do{ x <- parseAtom <?> "atom"
+      ; y <- b
+      ; return (x ++ y) }
 
-a :: OurParser Token
-a = do{ parseRightParen <?> ")" ; liftIO (putStrLn ")") ; b }
-    <|> do{ s ; parseRightParen <?> ")"; liftIO (putStrLn ")") ; b }
+a :: OurParser Int String
+a = do{ updateState (subtract 4)
+      ; x <- parseRightParen <?> ")"
+      ; y <- b
+      ; return (x ++ y) }
+    <|>
+    do{ x <- s
+      ; updateState (subtract 4)
+      ; y <- parseRightParen <?> ")"
+      ; z <- b
+      ; return (x ++ y ++ z) }
 
-b :: OurParser Token
-b = s <|> return Epsilon
+b :: OurParser Int String
+b = do{ x <- s
+      ; return x }
+    <|> return ""
 
+indent :: Int -> String
+indent n = take n (repeat ' ')
 
 main = do
     (fileName1:_) <- getArgs
     contents <- readFile fileName1
-    runPT f () fileName1 $ lexer contents -- lexer returns [Tokens]
+    case (runParser f 0 "" $ lexer contents) of
+        Left err  -> print err
+        Right xs  -> putStr xs
