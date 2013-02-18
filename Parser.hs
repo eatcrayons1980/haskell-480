@@ -2,18 +2,20 @@ module Main where
 
 import System.Environment
 import Scanner
+import Text.Parsec
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Pos
+import Control.Monad.IO.Class
 
-type OurParser a = GenParser Token () a
+--type OurParser a = GenParser Token () a
+type OurParser a = ParsecT [Token] () IO a
 
 mytoken :: (Token -> Maybe a) -> OurParser a
-mytoken test
-  = token showTok posFromTok testTok
-  where
-    showTok t           = show t
-    posFromTok t        = noPos
-    testTok t           = test t
+mytoken test = tokenPrim show update_pos test
+
+update_pos :: SourcePos -> Token -> [Token] -> SourcePos
+update_pos pos _ (tok:_) = noPos
+update_pos pos _ [] = noPos
 
 noPos :: SourcePos
 noPos = newPos "" 0 0
@@ -53,19 +55,19 @@ parseAtom
     B->S|Empty  
 -}
 f :: OurParser Token
-f = do{ parseEOF <?> "end of file" }
-    <|> do{ t ; f }
+f = do{ t ; f }
+    <|> do{ x <- parseEOF <?> "end of file" ; liftIO $ putStrLn "Done" ; return x }
 
 t :: OurParser Token
-t = do{ parseLeftParen <?> "("; s ; parseRightParen <?> ")"}
+t = do{ parseLeftParen <?> "("; liftIO (putStrLn "(") ; s ; x <- parseRightParen <?> ")" ; liftIO (putStrLn ")") ; return x }
 
 s :: OurParser Token
-s = do{ parseLeftParen <?> "("; a }
-    <|> do{ parseAtom <?> "atom"; b }
+s = do{ parseLeftParen <?> "("; liftIO (putStrLn "(") ; a }
+    <|> do{ x <- parseAtom <?> "atom"; liftIO (putStrLn $ show x) ; b }
 
 a :: OurParser Token
-a = do{ parseRightParen <?> ")"; b }
-    <|> do{ s ; parseRightParen <?> ")"; b }
+a = do{ parseRightParen <?> ")" ; liftIO (putStrLn ")") ; b }
+    <|> do{ s ; parseRightParen <?> ")"; liftIO (putStrLn ")") ; b }
 
 b :: OurParser Token
 b = s <|> return Epsilon
@@ -74,4 +76,4 @@ b = s <|> return Epsilon
 main = do
     (fileName1:_) <- getArgs
     contents <- readFile fileName1
-    parseTest f $ lexer contents
+    runPT f () fileName1 $ lexer contents -- lexer returns [Tokens]
