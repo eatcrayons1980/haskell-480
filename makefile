@@ -19,13 +19,13 @@ clean:
 
 stutest.out: compiler
 	cat stutest1.in
-	-$(EXE) $(RUNFLAGS) stutest1.in > stutest1.out
+	-./$(EXE) $(RUNFLAGS) stutest1.in > stutest1.out
 	cat stutest1.out > stutest.out
 	cat stutest2.in
-	-$(EXE) $(RUNFLAGS) stutest2.in > stutest2.out
+	-./$(EXE) $(RUNFLAGS) stutest2.in > stutest2.out
 	cat stutest2.out >> stutest.out
 	cat stutest3.in
-	-$(EXE) $(RUNFLAGS) stutest3.in > stutest3.out
+	-./$(EXE) $(RUNFLAGS) stutest3.in > stutest3.out
 	cat stutest3.out >> stutest.out
 	cat stutest*.in stutest.out
 
