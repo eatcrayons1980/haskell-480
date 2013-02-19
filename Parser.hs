@@ -50,9 +50,12 @@ update_pos pos _ _ = newPos "" 0 0
 
 indent n = take n (repeat ' ')
 
-{- Main -}
-main = do
-    (fileName1:_) <- getArgs
-    contents <- readFile fileName1
+main' x = do 
+    contents <- readFile x
     case (runParser f 0 "" $ lexer contents) of Left err -> print err
                                                 Right xs -> putStr xs
+
+{- Main -}
+main = do
+    files <- getArgs
+    mapM main' files
