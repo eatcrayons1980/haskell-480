@@ -4,3 +4,4 @@ Parser.hi
 Scanner.o
 Scanner.hi
 *.out
+parsec-3.1.3/
