@@ -11,10 +11,14 @@ RUNFLAGS =
 default: compiler
 
 compiler:
+	chmod 777 check_parsec.sh
+	./check_parsec.sh
 	$(CCC) $(CCFLAGS) $(SOURCE) -o $(EXE)
 
 clean:
+	ghc-pkg unregister parsec-3.1.3
 	rm -f ./*.hi ./*.o ./*.out $(EXE) core
+	rm -rf ./parsec-3.1.3
 	ls
 
 stu: stutest.out
