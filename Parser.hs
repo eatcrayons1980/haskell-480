@@ -54,6 +54,7 @@ indent n = take n (repeat ' ')
 main = do
     files <- getArgs
     flip mapM_ files $ \file -> do 
+      putStr ("\n\n"++file++"\n")
       contents <- readFile file
       case (runParser f 0 file $ lexer contents) of Left err -> print err
                                                     Right xs -> putStr xs
