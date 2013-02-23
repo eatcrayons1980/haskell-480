@@ -6,6 +6,11 @@ import Text.Parsec
 import Text.Parsec.Pos
 import Text.Parsec.String
 
+help = "Usage:\n         Parse [option] [files]\n\n"++
+            "-h, --help  -> This usage document.\n"++
+            "-s          -> Display scanner output only.\n"++
+            "Default     -> Full run on files."
+
 type OurParser a b = GenParser Token a b
 
 {- Grammar -}
@@ -52,9 +57,18 @@ indent n = take n (repeat ' ')
 
 {- main -}
 main = do
-    files <- getArgs
-    flip mapM_ files $ \file -> do 
-      putStr ("\n\n"++file++"\n")
-      contents <- readFile file
-      case (runParser f 0 file $ lexer contents) of Left err -> print err
-                                                    Right xs -> putStr xs
+    args <- getArgs
+    case args of
+        [] -> putStrLn help
+        "-h":_ -> putStrLn help
+        "--help":_ -> putStrLn help
+        "-s":files -> flip mapM_ files $ \file -> do
+                putStrLn ("\n\n"++file)
+                contents <- readFile file
+                mapM_ putStrLn (map show $ lexer contents)
+        _ ->    flip mapM_ args $ \file -> do
+                    putStrLn ("\n\n"++file)
+                    contents <- readFile file
+                    case (runParser f 0 file $ lexer contents) of
+                        Left err -> print err
+                        Right xs -> putStr xs
