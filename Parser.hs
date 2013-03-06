@@ -51,25 +51,25 @@ a = do{ parseRightParen <?> ")";
 -- B -> S | Empty
 b = do{ s_node <- s;
         return s_node }
-    <|> return [""]
+    <|> return []
 
 {- Parsers -}
 parseLeftParen = do
     i <- getState
-    mytoken (\t -> case t of LeftParen  -> Just([""])
+    mytoken (\t -> case t of LeftParen  -> Just([])
                              other      -> Nothing)
 parseRightParen = do
     i <- getState
-    mytoken (\t -> case t of RightParen -> Just([""])
+    mytoken (\t -> case t of RightParen -> Just([])
                              other      -> Nothing)
 parseAtom = do
     i <- getState
     mytoken (\t -> case t of EOF        -> Nothing
                              LeftParen  -> Nothing
                              RightParen -> Nothing
-                             other      -> Just([show t++" "]))
+                             other      -> Just([t]))
 parseEOF = do
-    mytoken (\t -> case t of EOF        -> Just([""])
+    mytoken (\t -> case t of EOF        -> Just([])
                              other      -> Nothing)
 {- Helpers -}
 mytoken test = tokenPrim show update_pos test
@@ -86,12 +86,12 @@ main = do
         "-h":_ -> putStrLn help
         "--help":_ -> putStrLn help
         "-s":files -> flip mapM_ files $ \file -> do
-                putStrLn ("\n\n"++file)
+                putStrLn file
                 contents <- readFile file
                 mapM_ putStrLn (map show $ lexer contents)
         _ ->    flip mapM_ args $ \file -> do
-                    putStrLn ("\n\n"++file)
+                    putStrLn file
                     contents <- readFile file
                     case (runParser f "$" file $ lexer contents) of
                         Left err -> print err
-                        Right xs -> putStrLn $ show (concat $ xs)
+                        Right xs -> mapM_ putStrLn (map show xs)
