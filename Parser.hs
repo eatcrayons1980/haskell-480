@@ -12,28 +12,42 @@ help = "Usage:\n         Parse [option] [files]\n\n"++
             "-s          -> Display scanner output only.\n"++
             "Default     -> Full run on files."
 
-type OurParser a b = GenParser Token a b
-
 {- Grammar -}
 -- F -> TF | <EOF>
-f = do{ x<-t;
-        y<-f;
-        return (Node "$" [x,y]) }
-    <|> do{ x<-parseEOF <?> "end of file"; return x }
+f = do{ f_inh <- t;
+        f_node <- f;
+        return (f_inh {subForest = subForest(f_inh)++[f_node]}) }
+    <|>
+    do{ parseEOF <?> "end of file" }
+
 -- T -> (S)
-t = do{ x<-parseLeftParen <?> "("; updateState(1+); y<-s; updateState(subtract 1);
-        z<-parseRightParen <?> ")"; return y }
+t = do{ parseLeftParen <?> "(";
+        t_node <- s;
+        parseRightParen <?> ")";
+        return t_node }
+
 -- S -> (A | atomB
-s = do{ x<-parseLeftParen <?> "("; updateState(1+); y<-a; return y }
-    <|> do{ x<-parseAtom <?> "atom";
-            y<-b;
-            return $ x {subForest = subForest(x)++[y]} }
+s = do{ parseLeftParen <?> "(";
+        s_node <- a;
+        return s_node }
+    <|>
+    do{ b_inh <- parseAtom <?> "atom";
+        b_node <- b;
+        return (b_inh {subForest = subForest(b_inh)++[b_node]}) }
+
 -- A -> )B | S)B
-a = do{ updateState(subtract 1); x<-parseRightParen <?> ")"; y<-b; return y }
-    <|> do{ x<-s; updateState(subtract 1); y<-parseRightParen <?> ")"; z<-b; return (Node "A" [x,z])  }
+a = do{ parseRightParen <?> ")";
+        x<-b;
+        return x }
+    <|>
+    do{ b_inh <- s;
+        parseRightParen <?> ")";
+        b_node <- b;
+        return (b_inh {subForest = subForest(b_inh)++[b_node]}) }
+
 -- B -> S | Empty
-b = do{x<-s; return x }
-    <|> return (Node "e" [])   -- epsilon
+b = do{ x<-s; return x }
+    <|> return (Node "e" [])
 
 {- Parsers -}
 parseLeftParen = do
@@ -74,6 +88,6 @@ main = do
         _ ->    flip mapM_ args $ \file -> do
                     putStrLn ("\n\n"++file)
                     contents <- readFile file
-                    case (runParser f 0 file $ lexer contents) of
+                    case (runParser f "$" file $ lexer contents) of
                         Left err -> print err
                         Right xs -> putStr (drawTree xs)
