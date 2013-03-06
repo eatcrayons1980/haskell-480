@@ -14,58 +14,62 @@ help = "Usage:\n         Parse [option] [files]\n\n"++
 
 {- Grammar -}
 -- F -> TF | <EOF>
-f = do{ f_inh <- t;
+f = do{ t_node <- t;
         f_node <- f;
-        return (f_inh {subForest = subForest(f_inh)++[f_node]}) }
+        return $ t_node++f_node }
     <|>
     do{ parseEOF <?> "end of file" }
 
 -- T -> (S)
 t = do{ parseLeftParen <?> "(";
-        t_node <- s;
+        s_node <- s;
         parseRightParen <?> ")";
-        return t_node }
+        let x:xs = s_node
+        in return [x {subForest = subForest(x)++xs}] }
 
 -- S -> (A | atomB
 s = do{ parseLeftParen <?> "(";
-        s_node <- a;
-        return s_node }
+        a_node <- a;
+        return a_node }
     <|>
-    do{ b_inh <- parseAtom <?> "atom";
+    do{ atom <- parseAtom <?> "atom";
         b_node <- b;
-        return (b_inh {subForest = subForest(b_inh)++[b_node]}) }
+        return (atom++b_node) }
 
 -- A -> )B | S)B
 a = do{ parseRightParen <?> ")";
-        x<-b;
-        return x }
+        b_node <- b;
+        return b_node }
     <|>
-    do{ b_inh <- s;
+    do{ s_node <- s;
         parseRightParen <?> ")";
         b_node <- b;
-        return (b_inh {subForest = subForest(b_inh)++[b_node]}) }
+        let x:xs = init s_node
+            b_node' = [last s_node]
+        in return $ [x {subForest = subForest(x)++xs++b_node'}]++b_node }
 
 -- B -> S | Empty
-b = do{ x<-s; return x }
-    <|> return (Node "e" [])
+b = do{ s_node <- s;
+        return s_node }
+    <|> return []
 
 {- Parsers -}
 parseLeftParen = do
     i <- getState
-    mytoken (\t -> case t of LeftParen  -> Just(Node "(" [] )
+    mytoken (\t -> case t of LeftParen  -> Just([])
                              other      -> Nothing)
 parseRightParen = do
     i <- getState
-    mytoken (\t -> case t of RightParen -> Just(Node ")" [] )
+    mytoken (\t -> case t of RightParen -> Just([])
                              other      -> Nothing)
 parseAtom = do
     i <- getState
     mytoken (\t -> case t of EOF        -> Nothing
                              LeftParen  -> Nothing
                              RightParen -> Nothing
-                             other      -> Just(Node (show t) []))
+                             other      -> Just([Node (show t) []]))
 parseEOF = do
-    mytoken (\t -> case t of EOF        -> Just(Node "<EOF>" [])
+    mytoken (\t -> case t of EOF        -> Just([])
                              other      -> Nothing)
 {- Helpers -}
 mytoken test = tokenPrim show update_pos test
@@ -90,4 +94,4 @@ main = do
                     contents <- readFile file
                     case (runParser f "$" file $ lexer contents) of
                         Left err -> print err
-                        Right xs -> putStr (drawTree xs)
+                        Right xs -> putStr $ drawForest xs
