@@ -16,7 +16,7 @@ help = "Usage:\n         Parse [option] [files]\n\n"++
 -- F -> TF | <EOF>
 f = do{ t_node <- t;
         f_node <- f;
-        return $ t_node++f_node }
+        return $ concat [t_node,f_node] }
     <|>
     do{ parseEOF <?> "end of file" }
 
@@ -25,7 +25,7 @@ t = do{ parseLeftParen <?> "(";
         s_node <- s;
         parseRightParen <?> ")";
         let x:xs = s_node
-        in return [x {subForest = subForest(x)++xs}] }
+        in return $ concat [xs,[x]] }
 
 -- S -> (A | atomB
 s = do{ parseLeftParen <?> "(";
@@ -34,7 +34,7 @@ s = do{ parseLeftParen <?> "(";
     <|>
     do{ atom <- parseAtom <?> "atom";
         b_node <- b;
-        return (atom++b_node) }
+        return $ concat [atom,b_node] }
 
 -- A -> )B | S)B
 a = do{ parseRightParen <?> ")";
@@ -46,30 +46,30 @@ a = do{ parseRightParen <?> ")";
         b_node <- b;
         let x:xs = init s_node
             b_node' = [last s_node]
-        in return $ [x {subForest = subForest(x)++xs++b_node'}]++b_node }
+        in return $ concat [concat [xs++b_node'++[x]], b_node] }
 
 -- B -> S | Empty
 b = do{ s_node <- s;
         return s_node }
-    <|> return []
+    <|> return [""]
 
 {- Parsers -}
 parseLeftParen = do
     i <- getState
-    mytoken (\t -> case t of LeftParen  -> Just([])
+    mytoken (\t -> case t of LeftParen  -> Just([""])
                              other      -> Nothing)
 parseRightParen = do
     i <- getState
-    mytoken (\t -> case t of RightParen -> Just([])
+    mytoken (\t -> case t of RightParen -> Just([""])
                              other      -> Nothing)
 parseAtom = do
     i <- getState
     mytoken (\t -> case t of EOF        -> Nothing
                              LeftParen  -> Nothing
                              RightParen -> Nothing
-                             other      -> Just([Node (show t) []]))
+                             other      -> Just([show t++" "]))
 parseEOF = do
-    mytoken (\t -> case t of EOF        -> Just([])
+    mytoken (\t -> case t of EOF        -> Just([""])
                              other      -> Nothing)
 {- Helpers -}
 mytoken test = tokenPrim show update_pos test
@@ -94,4 +94,4 @@ main = do
                     contents <- readFile file
                     case (runParser f "$" file $ lexer contents) of
                         Left err -> print err
-                        Right xs -> putStr $ drawForest xs
+                        Right xs -> putStrLn $ show (concat $ xs)
