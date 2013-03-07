@@ -6,6 +6,7 @@ import Text.Parsec
 import Text.Parsec.Pos
 import Text.Parsec.String
 import Data.Tree
+import Data.List
 
 help = "Usage:\n         Parse [option] [files]\n\n"++
             "-h, --help  -> This usage document.\n"++
@@ -55,11 +56,9 @@ b = do{ s_node <- s;
 
 {- Parsers -}
 parseLeftParen = do
-    i <- getState
     mytoken (\t -> case t of LeftParen  -> Just([])
                              other      -> Nothing)
 parseRightParen = do
-    i <- getState
     mytoken (\t -> case t of RightParen -> Just([])
                              other      -> Nothing)
 parseAtom = do
@@ -76,8 +75,6 @@ mytoken test = tokenPrim show update_pos test
 
 update_pos pos _ _ = newPos "" 0 0
 
-indent n = take (4*n) (repeat ' ')
-
 {- main -}
 main = do
     args <- getArgs
@@ -90,8 +87,7 @@ main = do
                 contents <- readFile file
                 mapM_ putStrLn (map show $ lexer contents)
         _ ->    flip mapM_ args $ \file -> do
-                    putStrLn file
                     contents <- readFile file
                     case (runParser f "$" file $ lexer contents) of
                         Left err -> print err
-                        Right xs -> mapM_ putStrLn (map show xs)
+                        Right xs -> mapM_ putStr $ (map ((++" ") . show) xs)++["\n"]

@@ -56,6 +56,8 @@ data Token
     | EOF
     | Epsilon
     | Error String
+
+    | Cast_Float
     deriving (Eq)
 
 operators :: [(Char,Token)]
@@ -248,7 +250,7 @@ instance Show Token where
     show (KW_Iff)      = "iff"
     show (KW_Assign)   = "assign"
     show (KW_Cos)      = "cos"
-    show (KW_Exp)      = "e"
+    show (KW_Exp)      = "exp"
     show (KW_If)       = "if"
     show (KW_Let)      = "let"
     show (KW_Logn)     = "logn"
@@ -262,3 +264,4 @@ instance Show Token where
     show (KW_String)   = "string"
     show (EOF)         = "EOF"
     show (Error x)     = show x
+    show (Cast_Float)  = "(float)"
