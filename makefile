@@ -22,14 +22,16 @@ clean:
 stu: stutest.out
 
 stutest.out: compiler
-	-./$(EXE) $(RUNFLAGS) stutest1.in > stutest1.out
-	-./$(EXE) $(RUNFLAGS) stutest2.in > stutest2.out
-	-./$(EXE) $(RUNFLAGS) stutest3.in > stutest3.out
-	-./$(EXE) $(RUNFLAGS) stutest4.in > stutest4.out
-	-./$(EXE) $(RUNFLAGS) stutest5.in > stutest5.out
-	-./$(EXE) $(RUNFLAGS) stutest6.in > stutest6.out
-	-./$(EXE) $(RUNFLAGS) stutest7.in > stutest7.out
-	-./$(EXE) $(RUNFLAGS) stutest8.in > stutest8.out
+	@./$(EXE) $(RUNFLAGS) stutest1.in > stutest1.out
+	@./$(EXE) $(RUNFLAGS) stutest2.in > stutest2.out
+	@./$(EXE) $(RUNFLAGS) stutest3.in > stutest3.out
+	@./$(EXE) $(RUNFLAGS) stutest4.in > stutest4.out
+	@./$(EXE) $(RUNFLAGS) stutest5.in > stutest5.out
+	@./$(EXE) $(RUNFLAGS) stutest6.in > stutest6.out
+	@./$(EXE) $(RUNFLAGS) stutest7.in > stutest7.out
+	@./$(EXE) $(RUNFLAGS) stutest8.in > stutest8.out
+	@echo ""
+	@echo ""
 	@cat stutest1.in stutest1.out
 	@echo ""
 	@cat stutest2.in stutest2.out
