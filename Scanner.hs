@@ -9,10 +9,10 @@ import Data.Char (isAlpha, isDigit, isSpace)
 
 data Token
     = VarId String
-    | IntTok Int
-    | FloatTok Float
+    | IntTok String
+    | FloatTok String
     | StringTok String
-    | BoolTok Bool
+    | BoolTok String
 
 -- Symbols
 
@@ -56,8 +56,6 @@ data Token
     | EOF
     | Epsilon
     | Error String
-
-    | Cast_Float
     deriving (Eq)
 
 operators :: [(Char,Token)]
@@ -94,8 +92,8 @@ keywords = [
     ( "float", KW_Float ),
     ( "string", KW_String ),
     ( "bool", KW_Bool ),
-    ( "true", BoolTok True),
-    ( "false", BoolTok False)
+    ( "true", BoolTok "True"),
+    ( "false", BoolTok "False")
     ]
 
 {----------------------------------------------------
@@ -169,15 +167,15 @@ readNum xs = let (i, rest0) = span isDigit xs
         ('.':ps) -> let (f, rest1) = span isDigit ps
             in case rest1 of
                 ('e':es) -> let (e, rest2) = readE rest1
-                    in (FloatTok (read (i++"."++f++e)::Float), rest2)
-                (_) -> (FloatTok (read (i++"."++f)::Float), rest1)
+                    in (FloatTok (i++"."++f++e), rest2)
+                (_) -> (FloatTok (i++"."++f), rest1)
         ('e':[]) -> let (e, rest1) = readE rest0
-            in (FloatTok (read (concat [i, e])::Float), rest1)
+            in (FloatTok (concat [i, e]), rest1)
         ('e':es) -> if isAlpha (head es)
-            then (IntTok (read i::Int), rest0)
+            then (IntTok i, rest0)
             else let (e, rest1) = readE rest0
-                in (FloatTok (read (concat [i, e])::Float), rest1)
-        (_) -> (IntTok (read i::Int), rest0)
+                in (FloatTok (concat [i, e]), rest1)
+        (_) -> (IntTok i, rest0)
 
 
 {----------------------------------------------------
@@ -263,5 +261,5 @@ instance Show Token where
     show (KW_Bool)     = "bool"
     show (KW_String)   = "string"
     show (EOF)         = "EOF"
+    show (Epsilon)     = ""
     show (Error x)     = show x
-    show (Cast_Float)  = "(float)"

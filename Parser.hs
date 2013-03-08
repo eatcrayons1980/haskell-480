@@ -17,7 +17,7 @@ help = "Usage:\n         Parse [option] [files]\n\n"++
 -- F -> TF | <EOF>
 f = do{ t_node <- t;
         f_node <- f;
-        return $ concat [t_node,f_node] }
+        return $ t_node++f_node }
     <|>
     do{ parseEOF <?> "end of file" }
 
@@ -25,8 +25,7 @@ f = do{ t_node <- t;
 t = do{ parseLeftParen <?> "(";
         s_node <- s;
         parseRightParen <?> ")";
-        let x:xs = s_node
-        in return $ concat [xs,[x]] }
+        return $ [type_op s_node] }
 
 -- S -> (A | atomB
 s = do{ parseLeftParen <?> "(";
@@ -35,7 +34,7 @@ s = do{ parseLeftParen <?> "(";
     <|>
     do{ atom <- parseAtom <?> "atom";
         b_node <- b;
-        return $ concat [atom,b_node] }
+        return (atom++b_node) }
 
 -- A -> )B | S)B
 a = do{ parseRightParen <?> ")";
@@ -45,9 +44,7 @@ a = do{ parseRightParen <?> ")";
     do{ s_node <- s;
         parseRightParen <?> ")";
         b_node <- b;
-        let x:xs = init s_node
-            b_node' = [last s_node]
-        in return $ concat [concat [xs++b_node'++[x]], b_node] }
+        return $ [type_op s_node]++b_node }
 
 -- B -> S | Empty
 b = do{ s_node <- s;
@@ -62,7 +59,6 @@ parseRightParen = do
     mytoken (\t -> case t of RightParen -> Just([])
                              other      -> Nothing)
 parseAtom = do
-    i <- getState
     mytoken (\t -> case t of EOF        -> Nothing
                              LeftParen  -> Nothing
                              RightParen -> Nothing
@@ -74,6 +70,45 @@ parseEOF = do
 mytoken test = tokenPrim show update_pos test
 
 update_pos pos _ _ = newPos "" 0 0
+
+type_op :: [Token] -> Token
+type_op ( op:[]) = op
+-- Integer Operators
+type_op ( (Plus)      : (IntTok x) :[]) = IntTok $ x++" +"
+type_op ( (Minus)     : (IntTok x) :[]) = IntTok $ x++" -"
+type_op ( (Mult)      : (IntTok x) :[]) = IntTok $ x++" *"
+type_op ( (Div)       : (IntTok x) :[]) = IntTok $ x++" /"
+type_op ( (Equal)     : (IntTok x) :[]) = IntTok $ x++" ="
+-- Float Operators
+type_op ( (Plus)      : (FloatTok x) :[]) = FloatTok $ x++" f+"
+type_op ( (Minus)     : (FloatTok x) :[]) = FloatTok $ x++" f-"
+type_op ( (Mult)      : (FloatTok x) :[]) = FloatTok $ x++" f*"
+type_op ( (Div)       : (FloatTok x) :[]) = FloatTok $ x++" f/"
+type_op ( (Equal)     : (FloatTok x) :[]) = FloatTok $ x++" ="
+type_op ( (KW_Assign) : (FloatTok x) :[]) = FloatTok $ x++" assign"
+type_op ( (KW_While)  : (FloatTok x) :[]) = FloatTok $ x++" while"
+-- Other Operators
+type_op ( op:rest:[]) = FloatTok $ show rest++" "++show op
+type_op ( op:xs)      = type_op (op:(type_op' xs):[])
+
+-- Token Combiner
+type_op' :: [Token] -> Token
+type_op' (a:[]) = a
+type_op' (a:b:[]) = case a of
+        (IntTok x)   -> case b of (IntTok y)   -> IntTok   $ x++" "++y
+                                  (FloatTok y) -> FloatTok $ x++" s>f "++y
+                                  (VarId y)    -> FloatTok $ x++" "++y
+                                  other        -> FloatTok $ x++" "++show b
+        (FloatTok x) -> case b of (IntTok y)   -> FloatTok $ x++" "++y++" s>f"
+                                  (FloatTok y) -> FloatTok $ x++" "++y
+                                  (VarId y)    -> FloatTok $ x++" "++y
+                                  other        -> FloatTok $ x++" "++show b
+        (VarId x)    -> case b of (IntTok y)   -> FloatTok $ x++" "++y
+                                  (FloatTok y) -> FloatTok $ x++" "++y
+                                  (VarId y)    -> FloatTok $ x++" "++y
+                                  other        -> FloatTok $ x++" "++show b
+        other -> Epsilon
+type_op' (a:b:c:ds) = type_op' $ (a:[type_op' (b:c:ds)])
 
 {- main -}
 main = do
@@ -90,4 +125,4 @@ main = do
                     contents <- readFile file
                     case (runParser f "$" file $ lexer contents) of
                         Left err -> print err
-                        Right xs -> mapM_ putStr $ (map ((++" ") . show) xs)++["\n"]
+                        Right xs -> mapM_ putStrLn $ map show xs
