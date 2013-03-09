@@ -1,1 +1,1 @@
-(+ (exp 5) 2)
+(or (not (true)) (not (false)))

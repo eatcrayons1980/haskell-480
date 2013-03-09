@@ -1,2 +1,1 @@
-string x
-( println("hello"))
+( and (true) (false) )
