@@ -13,8 +13,6 @@ help = "Usage:\n         Parse [option] [files]\n\n"++
             "-s          -> Display scanner output only.\n"++
             "Default     -> Full run on files."
 
-
-
 {----------------------------------------------------
     Grammar
 -----------------------------------------------------}
@@ -72,8 +70,6 @@ parseEOF = do
     mytoken (\t -> case t of EOF        -> Just([])
                              other      -> Nothing)
 
-
-
 {----------------------------------------------------
     gforth translation rules
 -----------------------------------------------------}
@@ -91,6 +87,7 @@ type_op ( (Mult)      : (IntTok x) :[]) = IntTok $ x++" *"
 type_op ( (Div)       : (IntTok x) :[]) = IntTok $ x++" /"
 type_op ( (Mod)       : (IntTok x) :[]) = IntTok $ x++" MOD"
 type_op ( (Equal)     : (IntTok x) :[]) = IntTok $ x++" ="
+type_op ( (Less)      : (IntTok x) :[]) = IntTok $ x++" <"
 -- Float Ops applied to Ints
 type_op ( (Carrot)    : (IntTok x) :[]) = FloatTok $ x++" s>f f**"
 type_op ( (KW_Exp)    : (IntTok x) :[]) = FloatTok $ x++" s>f fexp"
@@ -111,6 +108,7 @@ type_op ( (KW_Tan)    : (FloatTok x) :[]) = FloatTok $ x++" ftan"
 type_op ( (Equal)     : (FloatTok x) :[]) = FloatTok $ x++" ="
 type_op ( (KW_Assign) : (FloatTok x) :[]) = FloatTok $ x++" assign"
 type_op ( (KW_While)  : (FloatTok x) :[]) = FloatTok $ x++" while"
+type_op ( (Less)      : (FloatTok x) :[]) = FloatTok $ x++" f<"
 -- Other Operators
 type_op ( op:rest:[]) = Scanner.Error "<Invalid operator or argument>"
 type_op ( op:xs)      = type_op (op:(type_op' xs):[])
@@ -126,18 +124,14 @@ type_op' (a:b:[]) = case a of
                                    (FloatTok y)  -> FloatTok  $ x++" "++y
                                    other         -> Scanner.Error "<Unknown conversion to Float>"
         (BoolTok x)   -> case b of (BoolTok y)   -> BoolTok   $ x++" "++y
-        (StringTok x) -> case b of (StringTok y) -> StringTok $ x++" "++y
+        (StringTok x) -> case b of (StringTok y) -> StringTok $ "s\"hell "++x++"\" "++y
         other -> Scanner.Error "<Unknown type conversion>"
 type_op' (a:b:c:ds) = type_op' $ (a:[type_op' (b:c:ds)])
-
-
 
 {- Helpers -}
 mytoken test = tokenPrim show update_pos test
 
 update_pos pos _ _ = newPos "" 0 0
-
-
 
 {----------------------------------------------------
     Main
