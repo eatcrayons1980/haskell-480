@@ -4,4 +4,5 @@ Parser.hi
 Scanner.o
 Scanner.hi
 *.out
+*.fs
 parsec-3.1.3/
