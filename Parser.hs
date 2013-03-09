@@ -107,10 +107,10 @@ type_op ( (KW_Exp)    : (FloatTok x) :[]) = FloatTok $ x++" fexp"
 type_op ( (KW_Sin)    : (FloatTok x) :[]) = FloatTok $ x++" fsin"
 type_op ( (KW_Cos)    : (FloatTok x) :[]) = FloatTok $ x++" fcos"
 type_op ( (KW_Tan)    : (FloatTok x) :[]) = FloatTok $ x++" ftan"
-type_op ( (Equal)     : (FloatTok x) :[]) = FloatTok $ x++" f="
 type_op ( (KW_Assign) : (FloatTok x) :[]) = FloatTok $ x++" assign"
 type_op ( (KW_While)  : (FloatTok x) :[]) = FloatTok $ x++" while"
-type_op ( (Less)      : (FloatTok x) :[]) = FloatTok $ x++" f<"
+type_op ( (Equal)     : (FloatTok x) :[]) = BoolTok $ x++" f="
+type_op ( (Less)      : (FloatTok x) :[]) = BoolTok $ x++" f<"
 -- String Operators
 type_op ( (Plus)      : (StringTok x) :[]) = StringTok $ x++" append"
 -- Other Operators
