@@ -227,11 +227,11 @@ printWords source = do
     Show definitions for Tokens
 -----------------------------------------------------}
 instance Show Token where
-    show (VarId x)     = show x
-    show (IntTok x)    = show x
-    show (FloatTok x)  = show x
-    show (StringTok x) = show x
-    show (BoolTok x)   = show x
+    show (VarId x)     = x
+    show (IntTok x)    = x
+    show (FloatTok x)  = x
+    show (StringTok x) = x
+    show (BoolTok x)   = x
     show (LeftParen)   = "("
     show (RightParen)  = ")"
     show (Minus)       = "-"
@@ -262,4 +262,4 @@ instance Show Token where
     show (KW_String)   = "string"
     show (EOF)         = "EOF"
     show (Epsilon)     = ""
-    show (Error x)     = show x
+    show (Error x)     = x
