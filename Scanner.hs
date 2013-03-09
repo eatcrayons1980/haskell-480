@@ -168,7 +168,7 @@ readNum xs = let (i, rest0) = span isDigit xs
             in case rest1 of
                 ('e':es) -> let (e, rest2) = readE rest1
                     in (FloatTok (i++"."++f++e), rest2)
-                (_) -> (FloatTok (i++"."++f), rest1)
+                (_) -> (FloatTok (i++"."++f++"e"), rest1)
         ('e':[]) -> let (e, rest1) = readE rest0
             in (FloatTok (concat [i, e]), rest1)
         ('e':es) -> if isAlpha (head es)

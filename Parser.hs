@@ -19,16 +19,17 @@ help = "Usage:\n         Parse [option] [files]\n\n"++
 -- F -> TF | <EOF>
 f = do{ t_node <- t;
         f_node <- f;
-        return $ StringTok (show t_node++show f_node) }
+        case t_node of (FloatTok x) -> return $ (show t_node)++" f. "++f_node
+                       other        -> return $ (show t_node)++" . "++f_node }
     <|>
     do{ parseEOF <?> "end of file";
-        return $ StringTok " ." }
+        return $ "" }
 
 -- T -> (S)
 t = do{ parseLeftParen <?> "(";
         s_node <- s;
         parseRightParen <?> ")";
-        return $ StringTok (show $ type_op s_node) }
+        return $ type_op s_node }
 
 -- S -> (A | atomB
 s = do{ parseLeftParen <?> "(";
@@ -79,8 +80,8 @@ type_op ( op:[]) = op
 -- Boolean Operators
 type_op ( (KW_And)    : (BoolTok x) :[]) = BoolTok $ x++" and"
 type_op ( (KW_Or)     : (BoolTok x) :[]) = BoolTok $ x++" or"
-type_op ( (KW_Not)    : (BoolTok x) :[]) = BoolTok $ x++" not"
-type_op ( (KW_Iff)    : (BoolTok x) :[]) = BoolTok $ x++" iff"
+type_op ( (KW_Not)    : (BoolTok x) :[]) = BoolTok $ x++" invert"
+type_op ( (KW_Iff)    : (BoolTok x) :[]) = BoolTok $ x++" xor invert"
 -- Integer Operators
 type_op ( (Plus)      : (IntTok x) :[]) = IntTok $ x++" +"
 type_op ( (Minus)     : (IntTok x) :[]) = IntTok $ x++" -"
@@ -106,7 +107,7 @@ type_op ( (KW_Exp)    : (FloatTok x) :[]) = FloatTok $ x++" fexp"
 type_op ( (KW_Sin)    : (FloatTok x) :[]) = FloatTok $ x++" fsin"
 type_op ( (KW_Cos)    : (FloatTok x) :[]) = FloatTok $ x++" fcos"
 type_op ( (KW_Tan)    : (FloatTok x) :[]) = FloatTok $ x++" ftan"
-type_op ( (Equal)     : (FloatTok x) :[]) = FloatTok $ x++" ="
+type_op ( (Equal)     : (FloatTok x) :[]) = FloatTok $ x++" f="
 type_op ( (KW_Assign) : (FloatTok x) :[]) = FloatTok $ x++" assign"
 type_op ( (KW_While)  : (FloatTok x) :[]) = FloatTok $ x++" while"
 type_op ( (Less)      : (FloatTok x) :[]) = FloatTok $ x++" f<"
@@ -153,4 +154,4 @@ main = do
                     contents <- readFile file
                     case (runParser f "$" file $ lexer contents) of
                         Left err -> print err
-                        Right xs -> (putStrLn . show) xs
+                        Right xs -> putStrLn xs
