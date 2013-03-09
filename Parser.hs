@@ -78,39 +78,39 @@ type_op :: [Token] -> Token
 type_op ((StringTok x):[]) = StringTok $ "s\" "++x++"\""
 type_op ( op:[]) = op
 -- Boolean Operators
-type_op ( (KW_And)    : (BoolTok x) :[]) = BoolTok $ x++" and"
-type_op ( (KW_Or)     : (BoolTok x) :[]) = BoolTok $ x++" or"
-type_op ( (KW_Not)    : (BoolTok x) :[]) = BoolTok $ x++" invert"
-type_op ( (KW_Iff)    : (BoolTok x) :[]) = BoolTok $ x++" xor invert"
+type_op ( a@(KW_And)    : (BoolTok x) :[]) = BoolTok $ x++" "++show a
+type_op ( a@(KW_Or)     : (BoolTok x) :[]) = BoolTok $ x++" "++show a
+type_op ( a@(KW_Not)    : (BoolTok x) :[]) = BoolTok $ x++" "++show a
+type_op ( a@(KW_Iff)    : (BoolTok x) :[]) = BoolTok $ x++" "++show a
 -- Integer Operators
-type_op ( (Plus)      : (IntTok x) :[]) = IntTok $ x++" +"
-type_op ( (Minus)     : (IntTok x) :[]) = IntTok $ x++" -"
-type_op ( (Mult)      : (IntTok x) :[]) = IntTok $ x++" *"
-type_op ( (Div)       : (IntTok x) :[]) = IntTok $ x++" /"
-type_op ( (Mod)       : (IntTok x) :[]) = IntTok $ x++" MOD"
-type_op ( (Equal)     : (IntTok x) :[]) = IntTok $ x++" ="
-type_op ( (Less)      : (IntTok x) :[]) = IntTok $ x++" <"
+type_op ( a@(Plus)      : (IntTok x) :[]) = IntTok $ x++" "++show a
+type_op ( a@(Minus)     : (IntTok x) :[]) = IntTok $ x++" "++show a
+type_op ( a@(Mult)      : (IntTok x) :[]) = IntTok $ x++" "++show a
+type_op ( a@(Div)       : (IntTok x) :[]) = IntTok $ x++" "++show a
+type_op ( a@(Mod)       : (IntTok x) :[]) = IntTok $ x++" "++show a
+type_op ( a@(Equal)     : (IntTok x) :[]) = IntTok $ x++" "++show a
+type_op ( a@(Less)      : (IntTok x) :[]) = IntTok $ x++" "++show a
 -- Float Ops applied to Ints
-type_op ( (Carrot)    : (IntTok x) :[]) = FloatTok $ x++" s>f f**"
-type_op ( (KW_Exp)    : (IntTok x) :[]) = FloatTok $ x++" s>f fexp"
-type_op ( (KW_Sin)    : (IntTok x) :[]) = FloatTok $ x++" s>f fsin"
-type_op ( (KW_Cos)    : (IntTok x) :[]) = FloatTok $ x++" s>f fcos"
-type_op ( (KW_Tan)    : (IntTok x) :[]) = FloatTok $ x++" s>f ftan"
+type_op ( a@(Carrot)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
+type_op ( a@(KW_Exp)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
+type_op ( a@(KW_Sin)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
+type_op ( a@(KW_Cos)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
+type_op ( a@(KW_Tan)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
 -- Float Operators
-type_op ( (Plus)      : (FloatTok x) :[]) = FloatTok $ x++" f+"
-type_op ( (Minus)     : (FloatTok x) :[]) = FloatTok $ x++" f-"
-type_op ( (Mult)      : (FloatTok x) :[]) = FloatTok $ x++" f*"
-type_op ( (Div)       : (FloatTok x) :[]) = FloatTok $ x++" f/"
-type_op ( (Carrot)    : (FloatTok x) :[]) = FloatTok $ x++" f**"
-type_op ( (Mod)       : (FloatTok x) :[]) = FloatTok $ x++" fMOD"
-type_op ( (KW_Exp)    : (FloatTok x) :[]) = FloatTok $ x++" fexp"
-type_op ( (KW_Sin)    : (FloatTok x) :[]) = FloatTok $ x++" fsin"
-type_op ( (KW_Cos)    : (FloatTok x) :[]) = FloatTok $ x++" fcos"
-type_op ( (KW_Tan)    : (FloatTok x) :[]) = FloatTok $ x++" ftan"
-type_op ( (KW_Assign) : (FloatTok x) :[]) = FloatTok $ x++" assign"
-type_op ( (KW_While)  : (FloatTok x) :[]) = FloatTok $ x++" while"
-type_op ( (Equal)     : (FloatTok x) :[]) = BoolTok $ x++" f="
-type_op ( (Less)      : (FloatTok x) :[]) = BoolTok $ x++" f<"
+type_op ( a@(Plus)      : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
+type_op ( a@(Minus)     : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
+type_op ( a@(Mult)      : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
+type_op ( a@(Div)       : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
+type_op ( a@(Carrot)    : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
+type_op ( a@(Mod)       : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
+type_op ( a@(KW_Exp)    : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
+type_op ( a@(KW_Sin)    : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
+type_op ( a@(KW_Cos)    : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
+type_op ( a@(KW_Tan)    : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
+type_op ( a@(KW_Assign) : (FloatTok x) :[]) = FloatTok $ x++" "++show a
+type_op ( a@(KW_While)  : (FloatTok x) :[]) = FloatTok $ x++" "++show a
+type_op ( a@(Equal)     : (FloatTok x) :[]) = BoolTok $ x++" f"++show a
+type_op ( a@(Less)      : (FloatTok x) :[]) = BoolTok $ x++" f"++show a
 -- String Operators
 type_op ( (Plus)      : (StringTok x) :[]) = StringTok $ x++" append"
 -- Other Operators
