@@ -74,6 +74,7 @@ parseEOF = do
     gforth translation rules
 -----------------------------------------------------}
 type_op :: [Token] -> Token
+type_op ((StringTok x):[]) = StringTok $ "s\" "++x++"\""
 type_op ( op:[]) = op
 -- Boolean Operators
 type_op ( (KW_And)    : (BoolTok x) :[]) = BoolTok $ x++" and"
@@ -109,6 +110,8 @@ type_op ( (Equal)     : (FloatTok x) :[]) = FloatTok $ x++" ="
 type_op ( (KW_Assign) : (FloatTok x) :[]) = FloatTok $ x++" assign"
 type_op ( (KW_While)  : (FloatTok x) :[]) = FloatTok $ x++" while"
 type_op ( (Less)      : (FloatTok x) :[]) = FloatTok $ x++" f<"
+-- String Operators
+type_op ( (Plus)      : (StringTok x) :[]) = StringTok $ x++" append"
 -- Other Operators
 type_op ( op:rest:[]) = Scanner.Error "<Invalid operator or argument>"
 type_op ( op:xs)      = type_op (op:(type_op' xs):[])
@@ -124,7 +127,7 @@ type_op' (a:b:[]) = case a of
                                    (FloatTok y)  -> FloatTok  $ x++" "++y
                                    other         -> Scanner.Error "<Unknown conversion to Float>"
         (BoolTok x)   -> case b of (BoolTok y)   -> BoolTok   $ x++" "++y
-        (StringTok x) -> case b of (StringTok y) -> StringTok $ "s\"hell "++x++"\" "++y
+        (StringTok x) -> case b of (StringTok y) -> StringTok $ "s\" "++x++"\" "++" s\" "++y++"\""
         other -> Scanner.Error "<Unknown type conversion>"
 type_op' (a:b:c:ds) = type_op' $ (a:[type_op' (b:c:ds)])
 
