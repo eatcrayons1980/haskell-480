@@ -17,7 +17,7 @@ compiler:
 	$(CCC) $(CCFLAGS) $(SOURCE) -o $(EXE)
 
 clean:
-	rm -f ./*.hi ./*.o ./*.out $(EXE).exe $(EXE) core
+	rm -f ./*.fs ./*.hi ./*.o ./*.out $(EXE).exe $(EXE) core
 	rm -rf ./parsec-3.1.3
 
 stu: stutest.out
