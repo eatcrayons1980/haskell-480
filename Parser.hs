@@ -19,8 +19,9 @@ help = "Usage:\n         Parse [option] [files]\n\n"++
 -- F -> TF | <EOF>
 f = do{ t_node <- t;
         f_node <- f;
-        case t_node of (FloatTok x) -> return $ (show t_node)++" f. "++f_node
-                       other        -> return $ (show t_node)++" . "++f_node }
+        case t_node of (FloatTok x)  -> return $ (show t_node)++" f. "++f_node
+                       (StringTok x) -> return $ (show t_node)++" type "++f_node
+                       other         -> return $ (show t_node)++" . "++f_node }
     <|>
     do{ parseEOF <?> "end of file";
         return $ "" }
@@ -91,7 +92,7 @@ type_op ( a@(Mod)       : (IntTok x) :[]) = IntTok $ x++" "++show a
 type_op ( a@(Equal)     : (IntTok x) :[]) = IntTok $ x++" "++show a
 type_op ( a@(Less)      : (IntTok x) :[]) = IntTok $ x++" "++show a
 -- Float Ops applied to Ints
-type_op ( a@(Carrot)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
+type_op ( a@(Carrot)    : (IntTok x) : (IntTok y) :[]) = FloatTok $ x++" s>f "++y++" s>f f"++show a
 type_op ( a@(KW_Exp)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
 type_op ( a@(KW_Sin)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
 type_op ( a@(KW_Cos)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
