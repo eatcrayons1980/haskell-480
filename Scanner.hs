@@ -124,10 +124,7 @@ lexer' xs = let (t, rest) = lexToken xs
 -----------------------------------------------------}
 removeWhiteSpace :: String -> String
 removeWhiteSpace [] = []
-removeWhiteSpace l@(x:xs) = case isSpace x of
-    True -> removeWhiteSpace xs
-    False -> l
-
+removeWhiteSpace l@(x:xs) = if isSpace x then removeWhiteSpace xs else l
 
 {----------------------------------------------------
     lexToken:   
@@ -138,19 +135,19 @@ removeWhiteSpace l@(x:xs) = case isSpace x of
 lexToken :: String->(Token, String)
 lexToken [] = (EOF, [])
 lexToken l@(x:xs)
-    | isQuote = let (string, rest) = span (/='"') xs
-                    in (StringTok string, tail rest)
-    | isOperator = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
-    | isKeyword = ((map snd (filter ((==first).fst) keywords)) !! 0, rest)
+    | isQuote = let (s, r) = span (/='"') xs
+                    in (StringTok s, tail r)
+    | isOperator = (head (map snd (filter ((== x) . fst) operators)), xs)
+    | isKeyword = (head (map snd (filter ((== first) . fst) keywords)), rest)
     | isDigit x = readNum l
     | isVariable = (VarId first, rest)
     | otherwise = (Error "Unknown character", xs)
     where
         isQuote = x=='"'
-        isOperator = x `elem` (map fst operators)
-        isVariable = (isAlpha x || x=='_')
-        isKeyword = first `elem` (map fst keywords)
-        (first, rest) = span (\x->isAlpha x || isDigit x || x=='_') l
+        isOperator = x `elem` map fst operators
+        isVariable = isAlpha x || x=='_'
+        isKeyword = first `elem` map fst keywords
+        (first, rest) = span (\v->isAlpha v || isDigit v || v=='_') l
 
 -- We can merge all of the "is" prefixed variables in where into the guards
 -- but I left it for readability.
@@ -166,15 +163,15 @@ readNum xs = let (i, rest0) = span isDigit xs
     in case rest0 of
         ('.':ps) -> let (f, rest1) = span isDigit ps
             in case rest1 of
-                ('e':es) -> let (e, rest2) = readE rest1
+                ('e':_) -> let (e, rest2) = readE rest1
                     in (FloatTok (i++"."++f++e), rest2)
                 (_) -> (FloatTok (i++"."++f++"e"), rest1)
         ('e':[]) -> let (e, rest1) = readE rest0
-            in (FloatTok (concat [i, e]), rest1)
+            in (FloatTok (i++e), rest1)
         ('e':es) -> if isAlpha (head es)
             then (IntTok i, rest0)
             else let (e, rest1) = readE rest0
-                in (FloatTok (concat [i, e]), rest1)
+                in (FloatTok (i++e), rest1)
         (_) -> (IntTok i, rest0)
 
 
@@ -185,7 +182,7 @@ readNum xs = let (i, rest0) = span isDigit xs
 -----------------------------------------------------}
 readE :: String->(String, String)
 readE [] = ([], [])
-readE (x:[]) = ("e+0",[])
+readE (_:[]) = ("e+0",[])
 readE (x:y:[])
     | isDigit y = ("e+"++[y],[])
     | isSpace y = ("e+0",[])
@@ -196,12 +193,12 @@ readE (x:y:z:[])
     | isSpace y = ("e+0",[z])
     | otherwise = ([],[x,y,z])
 readE (x:y:z:xs)
-    | isDigit y = let (exp, rest) = span isDigit (y:z:xs)
-        in (("e+"++exp),rest)
-    | y `elem` "+-" && isDigit z = let (exp, rest) = span isDigit (z:xs)
-        in (([x,y]++exp),rest)
-    | isSpace y = ("e+0",(z:xs))
-    | otherwise = ("e+0",(y:z:xs))
+    | isDigit y = let (f, rest) = span isDigit (y:z:xs)
+        in ("e+"++f,rest)
+    | y `elem` "+-" && isDigit z = let (f, rest) = span isDigit (z:xs)
+        in ([x,y]++f,rest)
+    | isSpace y = ("e+0", z:xs)
+    | otherwise = ("e+0", y:z:xs)
 
 {----------------------------------------------------
     Main:

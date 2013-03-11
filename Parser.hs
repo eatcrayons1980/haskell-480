@@ -4,10 +4,11 @@ import System.Environment
 import Scanner
 import Text.Parsec
 import Text.Parsec.Pos
-import Text.Parsec.String
-import Data.Tree
-import Data.List
+import Text.Parsec.String()
+import Data.Tree()
+import Data.List()
 
+help :: String
 help = "Usage:\n         Parse [option] [files]\n\n"++
             "-h, --help  -> This usage document.\n"++
             "-s          -> Display scanner output only.\n"++
@@ -19,18 +20,18 @@ help = "Usage:\n         Parse [option] [files]\n\n"++
 -- F -> TF | <EOF>
 f = do{ t_node <- t;
         f_node <- f;
-        case t_node of (FloatTok x)  -> return $ (show t_node)++" f. "++f_node
-                       (StringTok x) -> return $ (show t_node)++" type "++f_node
-                       other         -> return $ (show t_node)++" . "++f_node }
+        case t_node of (FloatTok _)  -> return $ show t_node++" f. "++f_node
+                       (StringTok _) -> return $ show t_node++" type "++f_node
+                       _             -> return $ show t_node++" . "++f_node }
     <|>
     do{ parseEOF <?> "end of file";
-        return $ "" }
+        return "" }
 
 -- T -> (S)
 t = do{ parseLeftParen <?> "(";
         s_node <- s;
         parseRightParen <?> ")";
-        return $ type_op s_node }
+        return $ typeOp s_node }
 
 -- S -> (A | atomB
 s = do{ parseLeftParen <?> "(";
@@ -49,7 +50,7 @@ a = do{ parseRightParen <?> ")";
     do{ s_node <- s;
         parseRightParen <?> ")";
         b_node <- b;
-        return $ [type_op s_node]++b_node }
+        return $ typeOp s_node:b_node }
 
 -- B -> S | Empty
 b = do{ s_node <- s;
@@ -57,86 +58,82 @@ b = do{ s_node <- s;
     <|> return []
 
 {- Parsers -}
-parseLeftParen = do
-    mytoken (\t -> case t of LeftParen  -> Just([])
-                             other      -> Nothing)
-parseRightParen = do
-    mytoken (\t -> case t of RightParen -> Just([])
-                             other      -> Nothing)
-parseAtom = do
-    mytoken (\t -> case t of EOF        -> Nothing
-                             LeftParen  -> Nothing
-                             RightParen -> Nothing
-                             other      -> Just([t]))
-parseEOF = do
-    mytoken (\t -> case t of EOF        -> Just([])
-                             other      -> Nothing)
+parseLeftParen = mytoken (\v -> case v of LeftParen  -> Just []
+                                          _          -> Nothing)
+parseRightParen = mytoken (\v -> case v of RightParen -> Just []
+                                           _          -> Nothing)
+parseAtom = mytoken (\v -> case v of EOF        -> Nothing
+                                     LeftParen  -> Nothing
+                                     RightParen -> Nothing
+                                     _          -> Just [v])
+parseEOF = mytoken (\v -> case v of EOF -> Just []
+                                    _   -> Nothing)
 
 {----------------------------------------------------
     gforth translation rules
 -----------------------------------------------------}
-type_op :: [Token] -> Token
-type_op ((StringTok x):[]) = StringTok $ "s\" "++x++"\""
-type_op ( op:[]) = op
+typeOp :: [Token] -> Token
+typeOp (StringTok x:[]) = StringTok $ "s\" "++x++"\""
+typeOp (op:[]) = op
 -- Boolean Operators
-type_op ( a@(KW_And)    : (BoolTok x) :[]) = BoolTok $ x++" "++show a
-type_op ( a@(KW_Or)     : (BoolTok x) :[]) = BoolTok $ x++" "++show a
-type_op ( a@(KW_Not)    : (BoolTok x) :[]) = BoolTok $ x++" "++show a
-type_op ( a@(KW_Iff)    : (BoolTok x) :[]) = BoolTok $ x++" "++show a
+typeOp (l@KW_And    :BoolTok x:[]) = BoolTok $ x++" "++show l
+typeOp (l@KW_Or     :BoolTok x:[]) = BoolTok $ x++" "++show l
+typeOp (l@KW_Not    :BoolTok x:[]) = BoolTok $ x++" "++show l
+typeOp (l@KW_Iff    :BoolTok x:[]) = BoolTok $ x++" "++show l
 -- Integer Operators
-type_op ( a@(Plus)      : (IntTok x) :[]) = IntTok $ x++" "++show a
-type_op ( a@(Minus)     : (IntTok x) :[]) = IntTok $ x++" "++show a
-type_op ( a@(Mult)      : (IntTok x) :[]) = IntTok $ x++" "++show a
-type_op ( a@(Div)       : (IntTok x) :[]) = IntTok $ x++" "++show a
-type_op ( a@(Mod)       : (IntTok x) :[]) = IntTok $ x++" "++show a
-type_op ( a@(Equal)     : (IntTok x) :[]) = IntTok $ x++" "++show a
-type_op ( a@(Less)      : (IntTok x) :[]) = IntTok $ x++" "++show a
+typeOp (l@Plus      :IntTok x:[]) = IntTok $ x++" "++show l
+typeOp (l@Minus     :IntTok x:[]) = IntTok $ x++" "++show l
+typeOp (l@Mult      :IntTok x:[]) = IntTok $ x++" "++show l
+typeOp (l@Div       :IntTok x:[]) = IntTok $ x++" "++show l
+typeOp (l@Mod       :IntTok x:[]) = IntTok $ x++" "++show l
+typeOp (l@Equal     :IntTok x:[]) = IntTok $ x++" "++show l
+typeOp (l@Less      :IntTok x:[]) = IntTok $ x++" "++show l
 -- Float Ops applied to Ints
-type_op ( a@(Carrot)    : (IntTok x) : (IntTok y) :[]) = FloatTok $ x++" s>f "++y++" s>f f"++show a
-type_op ( a@(KW_Exp)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
-type_op ( a@(KW_Sin)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
-type_op ( a@(KW_Cos)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
-type_op ( a@(KW_Tan)    : (IntTok x) :[]) = FloatTok $ x++" s>f f"++show a
+typeOp (l@Carrot    :IntTok x:IntTok y:[]) = FloatTok $ x++" s>f "++y++" s>f f"++show l
+typeOp (l@KW_Exp    :IntTok x:[]) = FloatTok $ x++" s>f f"++show l
+typeOp (l@KW_Sin    :IntTok x:[]) = FloatTok $ x++" s>f f"++show l
+typeOp (l@KW_Cos    :IntTok x:[]) = FloatTok $ x++" s>f f"++show l
+typeOp (l@KW_Tan    :IntTok x:[]) = FloatTok $ x++" s>f f"++show l
 -- Float Operators
-type_op ( a@(Plus)      : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
-type_op ( a@(Minus)     : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
-type_op ( a@(Mult)      : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
-type_op ( a@(Div)       : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
-type_op ( a@(Carrot)    : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
-type_op ( a@(Mod)       : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
-type_op ( a@(KW_Exp)    : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
-type_op ( a@(KW_Sin)    : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
-type_op ( a@(KW_Cos)    : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
-type_op ( a@(KW_Tan)    : (FloatTok x) :[]) = FloatTok $ x++" f"++show a
-type_op ( a@(KW_Assign) : (FloatTok x) :[]) = FloatTok $ x++" "++show a
-type_op ( a@(KW_While)  : (FloatTok x) :[]) = FloatTok $ x++" "++show a
-type_op ( a@(Equal)     : (FloatTok x) :[]) = BoolTok $ x++" f"++show a
-type_op ( a@(Less)      : (FloatTok x) :[]) = BoolTok $ x++" f"++show a
+typeOp (l@Plus      :FloatTok x:[]) = FloatTok $ x++" f"++show l
+typeOp (l@Minus     :FloatTok x:[]) = FloatTok $ x++" f"++show l
+typeOp (l@Mult      :FloatTok x:[]) = FloatTok $ x++" f"++show l
+typeOp (l@Div       :FloatTok x:[]) = FloatTok $ x++" f"++show l
+typeOp (l@Carrot    :FloatTok x:[]) = FloatTok $ x++" f"++show l
+typeOp (l@Mod       :FloatTok x:[]) = FloatTok $ x++" f"++show l
+typeOp (l@KW_Exp    :FloatTok x:[]) = FloatTok $ x++" f"++show l
+typeOp (l@KW_Sin    :FloatTok x:[]) = FloatTok $ x++" f"++show l
+typeOp (l@KW_Cos    :FloatTok x:[]) = FloatTok $ x++" f"++show l
+typeOp (l@KW_Tan    :FloatTok x:[]) = FloatTok $ x++" f"++show l
+typeOp (l@KW_Assign :FloatTok x:[]) = FloatTok $ x++" "++show l
+typeOp (l@KW_While  :FloatTok x:[]) = FloatTok $ x++" "++show l
+typeOp (l@Equal     :FloatTok x:[]) = BoolTok $ x++" f"++show l
+typeOp (l@Less      :FloatTok x:[]) = BoolTok $ x++" f"++show l
 -- String Operators
-type_op ( (Plus)      : (StringTok x) :[]) = StringTok $ x++" append"
+typeOp (Plus        :StringTok x:[]) = StringTok $ x++" append"
 -- Other Operators
-type_op ( op:rest:[]) = Scanner.Error "<Invalid operator or argument>"
-type_op ( op:xs)      = type_op (op:(type_op' xs):[])
+typeOp (_:_:[]) = Scanner.Error "<Invalid operator or argument>"
+typeOp (op:xs)      = typeOp [op, typeOp' xs]
 
 -- Token Combiner
-type_op' :: [Token] -> Token
-type_op' (a:[]) = a
-type_op' (a:b:[]) = case a of
-        (IntTok x)    -> case b of (IntTok y)    -> IntTok    $ x++" "++y
+typeOp' :: [Token] -> Token
+typeOp' (v:[]) = v
+typeOp' (v:w:[]) = case v of
+        (IntTok x)    -> case w of (IntTok y)    -> IntTok    $ x++" "++y
                                    (FloatTok y)  -> FloatTok  $ x++" s>f "++y
-                                   other         -> Scanner.Error "<Unknown conversion to Int>"
-        (FloatTok x)  -> case b of (IntTok y)    -> FloatTok  $ x++" "++y++" s>f"
+                                   _             -> Scanner.Error "<Unknown conversion to Int>"
+        (FloatTok x)  -> case w of (IntTok y)    -> FloatTok  $ x++" "++y++" s>f"
                                    (FloatTok y)  -> FloatTok  $ x++" "++y
-                                   other         -> Scanner.Error "<Unknown conversion to Float>"
-        (BoolTok x)   -> case b of (BoolTok y)   -> BoolTok   $ x++" "++y
-        (StringTok x) -> case b of (StringTok y) -> StringTok $ "s\" "++x++"\" "++" s\" "++y++"\""
-        other -> Scanner.Error "<Unknown type conversion>"
-type_op' (a:b:c:ds) = type_op' $ (a:[type_op' (b:c:ds)])
+                                   _             -> Scanner.Error "<Unknown conversion to Float>"
+        (BoolTok x)   -> case w of (BoolTok y)   -> BoolTok   $ x++" "++y
+        (StringTok x) -> case w of (StringTok y) -> StringTok $ "s\" "++x++"\" "++" s\" "++y++"\""
+        _             -> Scanner.Error "<Unknown type conversion>"
+typeOp' (v:w:c:ds) = typeOp' (v:[typeOp' (w:c:ds)])
 
 {- Helpers -}
-mytoken test = tokenPrim show update_pos test
+mytoken = tokenPrim show updatePos
 
-update_pos pos _ _ = newPos "" 0 0
+updatePos pos _ _ = newPos "" 0 0
 
 {----------------------------------------------------
     Main
@@ -150,9 +147,9 @@ main = do
         "-s":files -> flip mapM_ files $ \file -> do
                 putStrLn file
                 contents <- readFile file
-                mapM_ putStrLn (map show $ lexer contents)
+                mapM_ print (lexer contents)
         _ ->    flip mapM_ args $ \file -> do
                     contents <- readFile file
-                    case (runParser f "$" file $ lexer contents) of
+                    case runParser f "$" file $ lexer contents of
                         Left err -> print err
                         Right xs -> putStrLn xs
