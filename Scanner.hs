@@ -92,8 +92,8 @@ keywords = [
     ( "float", KW_Float ),
     ( "string", KW_String ),
     ( "bool", KW_Bool ),
-    ( "true", BoolTok "True"),
-    ( "false", BoolTok "False")
+    ( "true", BoolTok "true"),
+    ( "false", BoolTok "false")
     ]
 
 {----------------------------------------------------
