@@ -20,9 +20,9 @@ help = "Usage:\n         Parse [option] [files]\n\n"++
 -- F -> TF | <EOF>
 f = do{ t_node <- t;
         f_node <- f;
-        case t_node of (FloatTok _)  -> return $ show t_node++" f. "++f_node
-                       (StringTok _) -> return $ show t_node++" type "++f_node
-                       _             -> return $ show t_node++" . "++f_node }
+        case t_node of (FloatTok _)  -> return $ show t_node++" f.\n"++f_node
+                       (StringTok _) -> return $ show t_node++" type\n"++f_node
+                       _             -> return $ show t_node++" .\n"++f_node }
     <|>
     do{ parseEOF <?> "end of file";
         return "" }
@@ -58,77 +58,79 @@ b = do{ s_node <- s;
     <|> return []
 
 {- Parsers -}
-parseLeftParen = mytoken (\v -> case v of LeftParen  -> Just []
-                                          _          -> Nothing)
+parseLeftParen  = mytoken (\v -> case v of LeftParen  -> Just []
+                                           _          -> Nothing)
 parseRightParen = mytoken (\v -> case v of RightParen -> Just []
                                            _          -> Nothing)
-parseAtom = mytoken (\v -> case v of EOF        -> Nothing
-                                     LeftParen  -> Nothing
-                                     RightParen -> Nothing
-                                     _          -> Just [v])
-parseEOF = mytoken (\v -> case v of EOF -> Just []
-                                    _   -> Nothing)
+parseAtom       = mytoken (\v -> case v of EOF        -> Nothing
+                                           LeftParen  -> Nothing
+                                           RightParen -> Nothing
+                                           _          -> Just [v])
+parseEOF        = mytoken (\v -> case v of EOF        -> Just []
+                                           _          -> Nothing)
 
 {----------------------------------------------------
     gforth translation rules
 -----------------------------------------------------}
 typeOp :: [Token] -> Token
-typeOp (StringTok x:[]) = StringTok $ "s\" "++x++"\""
-typeOp (op:[]) = op
 -- Boolean Operators
-typeOp (l@KW_And    :BoolTok x:[]) = BoolTok $ x++" "++show l
-typeOp (l@KW_Or     :BoolTok x:[]) = BoolTok $ x++" "++show l
-typeOp (l@KW_Not    :BoolTok x:[]) = BoolTok $ x++" "++show l
-typeOp (l@KW_Iff    :BoolTok x:[]) = BoolTok $ x++" "++show l
+typeOp (l@KW_And    :BoolTok  x:BoolTok  y:[]) = BoolTok $ x++" "    ++y++" "     ++show l
+typeOp (l@KW_Or     :BoolTok  x:BoolTok  y:[]) = BoolTok $ x++" "    ++y++" "     ++show l
+typeOp (  KW_Not    :BoolTok  x:[])            = BoolTok $ x++" invert"
+typeOp (  KW_Iff    :BoolTok  x:BoolTok  y:[]) = BoolTok $ x++" "    ++y++" xor invert"
+typeOp (l@Equal     :FloatTok x:FloatTok y:[]) = BoolTok $ x++" "    ++y++" f"    ++show l
+typeOp (l@Equal     :FloatTok x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" s>f f"++show l
+typeOp (l@Equal     :IntTok   x:FloatTok y:[]) = BoolTok $ x++" s>f "++y++" f"    ++show l
+typeOp (l@Equal     :IntTok   x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" "     ++show l
+typeOp (l@Less      :FloatTok x:FloatTok y:[]) = BoolTok $ x++" "    ++y++" f"    ++show l
+typeOp (l@Less      :FloatTok x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" s>f f"++show l
+typeOp (l@Less      :IntTok   x:FloatTok y:[]) = BoolTok $ x++" s>f "++y++" f"    ++show l
+typeOp (l@Less      :IntTok   x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" "     ++show l
 -- Integer Operators
-typeOp (l@Plus      :IntTok x:[]) = IntTok $ x++" "++show l
-typeOp (l@Minus     :IntTok x:[]) = IntTok $ x++" "++show l
-typeOp (l@Mult      :IntTok x:[]) = IntTok $ x++" "++show l
-typeOp (l@Div       :IntTok x:[]) = IntTok $ x++" "++show l
-typeOp (l@Mod       :IntTok x:[]) = IntTok $ x++" "++show l
-typeOp (l@Equal     :IntTok x:[]) = IntTok $ x++" "++show l
-typeOp (l@Less      :IntTok x:[]) = IntTok $ x++" "++show l
--- Float Ops applied to Ints
-typeOp (l@Carrot    :IntTok x:IntTok y:[]) = FloatTok $ x++" s>f "++y++" s>f f"++show l
-typeOp (l@KW_Exp    :IntTok x:[]) = FloatTok $ x++" s>f f"++show l
-typeOp (l@KW_Sin    :IntTok x:[]) = FloatTok $ x++" s>f f"++show l
-typeOp (l@KW_Cos    :IntTok x:[]) = FloatTok $ x++" s>f f"++show l
-typeOp (l@KW_Tan    :IntTok x:[]) = FloatTok $ x++" s>f f"++show l
+typeOp (l@Plus      :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" "++show l
+typeOp (l@Minus     :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" "++show l
+typeOp (  Minus     :IntTok x:[])          = IntTok $ x++" negate"
+typeOp (l@Mult      :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" "++show l
+typeOp (l@Div       :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" "++show l
+typeOp (l@Mod       :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" "++show l
 -- Float Operators
-typeOp (l@Plus      :FloatTok x:[]) = FloatTok $ x++" f"++show l
-typeOp (l@Minus     :FloatTok x:[]) = FloatTok $ x++" f"++show l
-typeOp (l@Mult      :FloatTok x:[]) = FloatTok $ x++" f"++show l
-typeOp (l@Div       :FloatTok x:[]) = FloatTok $ x++" f"++show l
-typeOp (l@Carrot    :FloatTok x:[]) = FloatTok $ x++" f"++show l
-typeOp (l@Mod       :FloatTok x:[]) = FloatTok $ x++" f"++show l
-typeOp (l@KW_Exp    :FloatTok x:[]) = FloatTok $ x++" f"++show l
-typeOp (l@KW_Sin    :FloatTok x:[]) = FloatTok $ x++" f"++show l
-typeOp (l@KW_Cos    :FloatTok x:[]) = FloatTok $ x++" f"++show l
-typeOp (l@KW_Tan    :FloatTok x:[]) = FloatTok $ x++" f"++show l
-typeOp (l@KW_Assign :FloatTok x:[]) = FloatTok $ x++" "++show l
-typeOp (l@KW_While  :FloatTok x:[]) = FloatTok $ x++" "++show l
-typeOp (l@Equal     :FloatTok x:[]) = BoolTok $ x++" f"++show l
-typeOp (l@Less      :FloatTok x:[]) = BoolTok $ x++" f"++show l
+typeOp (l@Plus      :FloatTok x:FloatTok y:[]) = FloatTok $ x++" "    ++y++" f"    ++show l
+typeOp (l@Plus      :FloatTok x:IntTok   y:[]) = FloatTok $ x++" "    ++y++" s>f f"++show l
+typeOp (l@Plus      :IntTok   x:FloatTok y:[]) = FloatTok $ x++" s>f "++y++" f"    ++show l
+typeOp (l@Minus     :FloatTok x:FloatTok y:[]) = FloatTok $ x++" "    ++y++" f"    ++show l
+typeOp (l@Minus     :FloatTok x:IntTok   y:[]) = FloatTok $ x++" "    ++y++" s>f f"++show l
+typeOp (l@Minus     :IntTok   x:FloatTok y:[]) = FloatTok $ x++" s>f "++y++" f"    ++show l
+typeOp (  Minus     :FloatTok x:[])            = FloatTok $ x++" fnegate"
+typeOp (l@Mult      :FloatTok x:FloatTok y:[]) = FloatTok $ x++" "    ++y++" f"    ++show l
+typeOp (l@Mult      :FloatTok x:IntTok   y:[]) = FloatTok $ x++" "    ++y++" s>f f"++show l
+typeOp (l@Mult      :IntTok   x:FloatTok y:[]) = FloatTok $ x++" s>f "++y++" f"    ++show l
+typeOp (l@Div       :FloatTok x:FloatTok y:[]) = FloatTok $ x++" "    ++y++" f"    ++show l
+typeOp (l@Div       :FloatTok x:IntTok   y:[]) = FloatTok $ x++" "    ++y++" s>f f"++show l
+typeOp (l@Div       :IntTok   x:FloatTok y:[]) = FloatTok $ x++" s>f "++y++" f"    ++show l
+typeOp (l@Carrot    :FloatTok x:FloatTok y:[]) = FloatTok $ x++" "    ++y++" f"    ++show l
+typeOp (l@Carrot    :FloatTok x:IntTok   y:[]) = FloatTok $ x++" "    ++y++" s>f f"++show l
+typeOp (l@Carrot    :IntTok   x:FloatTok y:[]) = FloatTok $ x++" s>f "++y++" f"    ++show l
+typeOp (l@Carrot    :IntTok   x:IntTok   y:[]) = FloatTok $ x++" s>f "++y++" s>f f"++show l
+typeOp (l@Mod       :FloatTok x:FloatTok y:[]) = FloatTok $ x++" "    ++y++" f"    ++show l
+typeOp (l@Mod       :FloatTok x:IntTok   y:[]) = FloatTok $ x++" "    ++y++" s>f f"++show l
+typeOp (l@Mod       :IntTok   x:FloatTok y:[]) = FloatTok $ x++" s>f "++y++" f"    ++show l
+typeOp (l@KW_Exp    :FloatTok x:[])            = FloatTok $ x++" f"                ++show l
+typeOp (l@KW_Exp    :IntTok   x:[])            = FloatTok $ x++" s>f f"            ++show l
+typeOp (l@KW_Sin    :FloatTok x:[])            = FloatTok $ x++" f"                ++show l
+typeOp (l@KW_Sin    :IntTok   x:[])            = FloatTok $ x++" s>f f"            ++show l
+typeOp (l@KW_Cos    :FloatTok x:[])            = FloatTok $ x++" f"                ++show l
+typeOp (l@KW_Cos    :IntTok   x:[])            = FloatTok $ x++" s>f f"            ++show l
+typeOp (l@KW_Tan    :FloatTok x:[])            = FloatTok $ x++" f"                ++show l
+typeOp (l@KW_Tan    :IntTok   x:[])            = FloatTok $ x++" s>f f"            ++show l
+typeOp (l@KW_Assign :FloatTok x:[])            = FloatTok $ x++" "                 ++show l
+typeOp (l@KW_While  :FloatTok x:[])            = FloatTok $ x++" "                 ++show l
 -- String Operators
-typeOp (Plus        :StringTok x:[]) = StringTok $ x++" append"
+typeOp (Plus        :StringTok x:StringTok y:[]) = StringTok $ "s\" "++x++"\" s\" "++y++"\" append"
 -- Other Operators
-typeOp (_:_:[]) = Scanner.Error "<Invalid operator or argument>"
-typeOp (op:xs)      = typeOp [op, typeOp' xs]
-
--- Token Combiner
-typeOp' :: [Token] -> Token
-typeOp' (v:[]) = v
-typeOp' (v:w:[]) = case v of
-        (IntTok x)    -> case w of (IntTok y)    -> IntTok    $ x++" "++y
-                                   (FloatTok y)  -> FloatTok  $ x++" s>f "++y
-                                   _             -> Scanner.Error "<Unknown conversion to Int>"
-        (FloatTok x)  -> case w of (IntTok y)    -> FloatTok  $ x++" "++y++" s>f"
-                                   (FloatTok y)  -> FloatTok  $ x++" "++y
-                                   _             -> Scanner.Error "<Unknown conversion to Float>"
-        (BoolTok x)   -> case w of (BoolTok y)   -> BoolTok   $ x++" "++y
-        (StringTok x) -> case w of (StringTok y) -> StringTok $ "s\" "++x++"\" "++" s\" "++y++"\""
-        _             -> Scanner.Error "<Unknown type conversion>"
-typeOp' (v:w:c:ds) = typeOp' (v:[typeOp' (w:c:ds)])
+typeOp (x:[])     = x
+typeOp []         = Scanner.Error "<Empty set>"
+typeOp (_:_:[])   = Scanner.Error "<Invalid operator or argument>"
+typeOp (_:_:_:[]) = Scanner.Error "<Invalid operator or argument>"
 
 {- Helpers -}
 mytoken = tokenPrim show updatePos
