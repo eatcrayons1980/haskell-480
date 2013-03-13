@@ -32,9 +32,7 @@ stutest.out: 1 2 3 4 5 6 7 8 9
 	cat stutest1.in
 	@echo ""
 	cat stutest1.fs
-	@echo ""
 	cat stutest1.out
-	@echo ""
 	@echo ""
 	@echo ""
 
@@ -46,9 +44,7 @@ stutest.out: 1 2 3 4 5 6 7 8 9
 	cat stutest2.in
 	@echo ""
 	cat stutest2.fs
-	@echo ""
 	cat stutest2.out
-	@echo ""
 	@echo ""
 	@echo ""
 
@@ -60,9 +56,7 @@ stutest.out: 1 2 3 4 5 6 7 8 9
 	cat stutest3.in
 	@echo ""
 	cat stutest3.fs
-	@echo ""
 	cat stutest3.out
-	@echo ""
 	@echo ""
 	@echo ""
 
@@ -74,9 +68,7 @@ stutest.out: 1 2 3 4 5 6 7 8 9
 	cat stutest4.in
 	@echo ""
 	cat stutest4.fs
-	@echo ""
 	cat stutest4.out
-	@echo ""
 	@echo ""
 	@echo ""
 
@@ -88,9 +80,7 @@ stutest.out: 1 2 3 4 5 6 7 8 9
 	cat stutest5.in
 	@echo ""
 	cat stutest5.fs
-	@echo ""
 	cat stutest5.out
-	@echo ""
 	@echo ""
 	@echo ""
 
@@ -102,9 +92,7 @@ stutest.out: 1 2 3 4 5 6 7 8 9
 	cat stutest6.in
 	@echo ""
 	cat stutest6.fs
-	@echo ""
 	cat stutest6.out
-	@echo ""
 	@echo ""
 	@echo ""
 
@@ -116,9 +104,7 @@ stutest.out: 1 2 3 4 5 6 7 8 9
 	cat stutest7.in
 	@echo ""
 	cat stutest7.fs
-	@echo ""
 	cat stutest7.out
-	@echo ""
 	@echo ""
 	@echo ""
 
@@ -130,9 +116,7 @@ stutest.out: 1 2 3 4 5 6 7 8 9
 	cat stutest8.in
 	@echo ""
 	cat stutest8.fs
-	@echo ""
 	cat stutest8.out
-	@echo ""
 	@echo ""
 	@echo ""
 
@@ -144,9 +128,7 @@ stutest.out: 1 2 3 4 5 6 7 8 9
 	cat stutest9.in
 	@echo ""
 	cat stutest9.fs
-	@echo ""
 	cat stutest9.out
-	@echo ""
 	@echo ""
 	@echo ""
 
