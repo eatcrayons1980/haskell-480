@@ -20,9 +20,7 @@ help = "Usage:\n         Parse [option] [files]\n\n"++
 -- F -> TF | <EOF>
 f = do{ t_node <- t;
         f_node <- f;
-        case t_node of (FloatTok _)  -> return $ show t_node++" f.\n"++f_node
-                       (StringTok _) -> return $ show t_node++" type\n"++f_node
-                       _             -> return $ show t_node++" .\n"++f_node }
+        return $ concat[show t_node,"\n",f_node] }
     <|>
     do{ parseEOF <?> "end of file";
         return "" }
@@ -65,6 +63,7 @@ parseRightParen = mytoken (\v -> case v of RightParen -> Just []
 parseAtom       = mytoken (\v -> case v of EOF        -> Nothing
                                            LeftParen  -> Nothing
                                            RightParen -> Nothing
+                                           StringTok x-> Just [StringTok ("s\" "++x++"\"")]
                                            _          -> Just [v])
 parseEOF        = mytoken (\v -> case v of EOF        -> Just []
                                            _          -> Nothing)
@@ -74,25 +73,29 @@ parseEOF        = mytoken (\v -> case v of EOF        -> Just []
 -----------------------------------------------------}
 typeOp :: [Token] -> Token
 -- Boolean Operators
-typeOp (l@KW_And    :BoolTok  x:BoolTok  y:[]) = BoolTok $ x++" "    ++y++" "     ++show l
-typeOp (l@KW_Or     :BoolTok  x:BoolTok  y:[]) = BoolTok $ x++" "    ++y++" "     ++show l
-typeOp (  KW_Not    :BoolTok  x:[])            = BoolTok $ x++" invert"
-typeOp (  KW_Iff    :BoolTok  x:BoolTok  y:[]) = BoolTok $ x++" "    ++y++" xor invert"
-typeOp (l@Equal     :FloatTok x:FloatTok y:[]) = BoolTok $ x++" "    ++y++" f"    ++show l
-typeOp (l@Equal     :FloatTok x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" s>f f"++show l
-typeOp (l@Equal     :IntTok   x:FloatTok y:[]) = BoolTok $ x++" s>f "++y++" f"    ++show l
-typeOp (l@Equal     :IntTok   x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" "     ++show l
-typeOp (l@Less      :FloatTok x:FloatTok y:[]) = BoolTok $ x++" "    ++y++" f"    ++show l
-typeOp (l@Less      :FloatTok x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" s>f f"++show l
-typeOp (l@Less      :IntTok   x:FloatTok y:[]) = BoolTok $ x++" s>f "++y++" f"    ++show l
-typeOp (l@Less      :IntTok   x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" "     ++show l
+typeOp (KW_And    :BoolTok  x:BoolTok  y:[]) = BoolTok $ concat [x," ",y," and"]
+typeOp (KW_Or     :BoolTok  x:BoolTok  y:[]) = BoolTok $ x++" "    ++y++" or"
+typeOp (KW_Not    :BoolTok  x:[])            = BoolTok $ x++" invert"
+typeOp (KW_Iff    :BoolTok  x:BoolTok  y:[]) = BoolTok $ x++" "    ++y++" xor invert"
+typeOp (Equal     :FloatTok x:FloatTok y:[]) = BoolTok $ x++" "    ++y++" f="
+typeOp (Equal     :FloatTok x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" s>f f="
+typeOp (Equal     :IntTok   x:FloatTok y:[]) = BoolTok $ x++" s>f "++y++" f="
+typeOp (Equal     :IntTok   x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" ="
+typeOp (Less      :FloatTok x:FloatTok y:[]) = BoolTok $ x++" "    ++y++" f<"
+typeOp (Less      :FloatTok x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" s>f f<"
+typeOp (Less      :IntTok   x:FloatTok y:[]) = BoolTok $ x++" s>f "++y++" f<"
+typeOp (Less      :IntTok   x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" <"
+typeOp (Greater   :FloatTok x:FloatTok y:[]) = BoolTok $ x++" "    ++y++" f>"
+typeOp (Greater   :FloatTok x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" s>f f>"
+typeOp (Greater   :IntTok   x:FloatTok y:[]) = BoolTok $ x++" s>f "++y++" f>"
+typeOp (Greater   :IntTok   x:IntTok   y:[]) = BoolTok $ x++" "    ++y++" >"
 -- Integer Operators
-typeOp (l@Plus      :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" "++show l
-typeOp (l@Minus     :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" "++show l
-typeOp (  Minus     :IntTok x:[])          = IntTok $ x++" negate"
-typeOp (l@Mult      :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" "++show l
-typeOp (l@Div       :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" "++show l
-typeOp (l@Mod       :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" "++show l
+typeOp (Plus      :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" +"
+typeOp (Minus     :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" -"
+typeOp (Minus     :IntTok x:[])          = IntTok $ x++" negate"
+typeOp (Mult      :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" *"
+typeOp (Div       :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" /"
+typeOp (Mod       :IntTok x:IntTok y:[]) = IntTok $ x++" "++y++" %"
 -- Float Operators
 typeOp (l@Plus      :FloatTok x:FloatTok y:[]) = FloatTok $ x++" "    ++y++" f"    ++show l
 typeOp (l@Plus      :FloatTok x:IntTok   y:[]) = FloatTok $ x++" "    ++y++" s>f f"++show l
@@ -125,17 +128,53 @@ typeOp (l@KW_Tan    :IntTok   x:[])            = FloatTok $ x++" s>f f"         
 typeOp (l@KW_Assign :FloatTok x:[])            = FloatTok $ x++" "                 ++show l
 typeOp (l@KW_While  :FloatTok x:[])            = FloatTok $ x++" "                 ++show l
 -- String Operators
-typeOp (Plus        :StringTok x:StringTok y:[]) = StringTok $ "s\" "++x++"\" s\" "++y++"\" append"
--- Other Operators
+typeOp (Plus        :StringTok x:StringTok y:[]) = StringTok $ x++" "++y++" s+"
+-- Print Operators
+typeOp (KW_Print    :IntTok    x:[]) = IntTok    $ x++" ."
+typeOp (KW_Print    :FloatTok  x:[]) = FloatTok  $ x++" f."
+typeOp (KW_Print    :StringTok x:[]) = StringTok $ x++gType++" type'"
+typeOp (KW_Print    :BoolTok   x:[]) = BoolTok   $ x++" ."
+-- If Operators
+    -- IntTok
+typeOp (KW_If:BoolTok x:IntTok y:[])                = IntTok $ makeIf x y
+typeOp (KW_If:BoolTok x:IntTok y:IntTok z:[])       = IntTok $ makeIfElse x y z
+    -- FloatTok
+typeOp (KW_If:BoolTok x:FloatTok y:[])              = FloatTok $ makeIf x y
+typeOp (KW_If:BoolTok x:FloatTok y:FloatTok z:[])   = FloatTok $ makeIfElse x y z
+    -- StringTok
+typeOp (KW_If:BoolTok x:StringTok y:[])             = StringTok $ makeIf x y
+typeOp (KW_If:BoolTok x:StringTok y:StringTok z:[]) = StringTok $ makeIfElse x y z
+    -- BoolTok
+typeOp (KW_If:BoolTok x:BoolTok y:[])               = BoolTok $ makeIf x y
+typeOp (KW_If:BoolTok x:BoolTok y:BoolTok z:[])     = BoolTok $ makeIfElse x y z
+    -- Error
+typeOp (KW_If:_) = Scanner.Error "<Unknown arguments for if statement>"
+
+-- Let and Assign Operators
+--typeOp (KW_Let:VarId x:KW_Int:[]) = 
+
+typeOp (StringTok x:[]) = StringTok x
+typeOp (FloatTok  x:[]) = FloatTok x
+typeOp (IntTok    x:[]) = IntTok x
+typeOp (BoolTok   x:[]) = BoolTok x
+typeOp (StringTok x:xs) = StringTok $ concat[x,"\n", show (typeOp xs)]
+typeOp (FloatTok  x:xs) = FloatTok  $ concat[x,"\n", show (typeOp xs)]
+typeOp (IntTok    x:xs) = IntTok    $ concat[x,"\n", show (typeOp xs)]
+typeOp (BoolTok   x:xs) = BoolTok   $ concat[x,"\n", show (typeOp xs)]
 typeOp (x:[])     = x
-typeOp []         = Scanner.Error "<Empty set>"
+typeOp []         = Scanner.Error "<Empty set error>"
 typeOp (_:_:[])   = Scanner.Error "<Invalid operator or argument>"
-typeOp (_:_:_:[]) = Scanner.Error "<Invalid operator or argument>"
+typeOp (_:_:_:[]) = Scanner.Error "<Invalid operator or arguments>"
 
 {- Helpers -}
 mytoken = tokenPrim show updatePos
 
 updatePos pos _ _ = newPos "" 0 0
+
+gType = "\n: type' depth 1 > if type then ;\n"
+
+makeIf     x y   = concat["\n: if_lambda ",x," if ",y,           " then ;\nif_lambda\n"]
+makeIfElse x y z = concat["\n: if_lambda ",x," if ",y," else ",z," then ;\nif_lambda\n"]
 
 {----------------------------------------------------
     Main
@@ -152,6 +191,6 @@ main = do
                 mapM_ print (lexer contents)
         _ ->    flip mapM_ args $ \file -> do
                     contents <- readFile file
-                    case runParser f "$" file $ lexer contents of
+                    case runParser f [Epsilon] file $ lexer contents of
                         Left err -> print err
                         Right xs -> putStrLn xs
