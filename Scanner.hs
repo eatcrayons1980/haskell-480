@@ -29,6 +29,7 @@ data Token
     | Div
     | Equal
     | Less
+    | Greater
 
 -- Keywords
 
@@ -43,7 +44,7 @@ data Token
     | KW_If
     | KW_Let
     | KW_Logn
-    | KW_PrintLn
+    | KW_Print
     | KW_Sin
     | KW_Tan
     | KW_While
@@ -68,6 +69,7 @@ operators = [
     ( '/', Div ),
     ( '=', Equal ),
     ( '<', Less ),
+    ( '>', Greater ),
     ( '(', LeftParen),
     ( ')', RightParen)
     ]
@@ -84,10 +86,10 @@ keywords = [
     ( "if", KW_If ),
     ( "let", KW_Let ),
     ( "log", KW_Logn ),
-    ( "println", KW_PrintLn ),
+    ( "print", KW_Print ),
     ( "sin", KW_Sin ),
     ( "tan", KW_Tan ),
-    ( "while", KW_While ),
+    ( "whle", KW_While ),
     ( "int", KW_Int ),
     ( "float", KW_Float ),
     ( "string", KW_String ),
@@ -239,6 +241,7 @@ instance Show Token where
     show (Div)         = "/"
     show (Equal)       = "="
     show (Less)        = "<"
+    show (Greater)     = ">"
     show (KW_And)      = "and"
     show (KW_Or)       = "or"
     show (KW_Not)      = "invert"
@@ -249,7 +252,7 @@ instance Show Token where
     show (KW_If)       = "if"
     show (KW_Let)      = "let"
     show (KW_Logn)     = "logn"
-    show (KW_PrintLn)  = "println"
+    show (KW_Print)    = "print"
     show (KW_Sin)      = "sin"
     show (KW_Tan)      = "tan"
     show (KW_While)    = "while"
