@@ -1,1 +1,1 @@
-(or (not (true)) (not (false)))
+((let (x int)) (assign x 10) (print (- 20 x)))

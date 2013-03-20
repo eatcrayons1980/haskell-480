@@ -1,1 +1,1 @@
-(- (tan 45) (^ 2e0 4e0))
+((+ 2 3)(- 5 3)(+ "Hello" "World")(and true true))
