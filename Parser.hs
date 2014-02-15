@@ -16,65 +16,65 @@ t = do
     z<-parseRightBracket <?> "]"
     return (x++y++z)
 -- S -> []S' | [S]S' | exprS'
-s = try do
+s = try (do
     x<-parseLeftBracket <?> "["
     y<-parseRightBracket <?> "]"
     z<-s'
-    return (x++y++z)
+    return (x++y++z))
     <|>
-    try do
+    try (do
     w<-parseLeftBracket <?> "["
     x<-s
     y<-parseRightBracket <?> "]"
     z<-s'
-    return (w++x++y++z)
+    return (w++x++y++z))
     <|>
     do
     x<-expr
     y<-s'
     return (x++y)
 -- S' -> SS' | Empty
-s' = do
+s' = try (do
     x<-s
     y<-s'
-    return (x++y)
+    return (x++y))
     <|>
     return "" -- epsilon
 -- expr -> oper | stmts
-expr = do
+expr = try (do
     x<-oper
-    return x
+    return x)
     <|>
     do
     x<-stmts
     return x
 -- oper -> [:= name oper] | [binops oper oper] | [unops oper] | constants | name
-oper = do
+oper = try (do
     v<-parseLeftBracket <?> "["
     w<-parseAssignment <?> ":="
     x<-name
     y<-oper
     z<-parseRightBracket <?> "]"
-    return (v++w++x++y++z)
+    return (v++w++x++y++z))
     <|>
-    do
+    try (do
     v<-parseLeftBracket <?> "["
     w<-binops
     x<-oper
     y<-oper
     z<-parseRightBracket <?> "]"
-    return (v++w++x++y++z)
+    return (v++w++x++y++z))
     <|>
-    do
+    try (do
     w<-parseLeftBracket <?> "["
     x<-unops
     y<-oper
     z<-parseRightBracket <?> "]"
-    return (w++x++y++z)
+    return (w++x++y++z))
     <|>
-    do
+    try (do
     x<-constants
-    return x
+    return x)
     <|>
     do
     x<-name
@@ -88,21 +88,21 @@ unops = do
     x<-parseUnOp <?> "bnary operator"
     return x
 -- constants -> strings | ints | floats
-constants = do
+constants = try (do
     x<-strings
-    return x
+    return x)
     <|>
-    do
+    try (do
     x<-ints
-    return x
+    return x)
     <|>
     do
     x<-floats
     return x
 -- strings -> regex for str literal in C | true | false
-strings = do
+strings = try (do
     x<-parseStringValue <?> "string value"
-    return x
+    return x)
     <|>
     do
     x<-parseBoolValue <?> "true/false"
@@ -120,17 +120,17 @@ floats = do
     x<-parseFloatValue <?> "float value"
     return x
 -- stmts -> ifstmts | whilestmts | letstmts | printstmts
-stmts = do
+stmts = try (do
     x<-ifstmts
-    return x
+    return x)
     <|>
-    do
+    try (do
     x<-whilestmts
-    return x
+    return x)
     <|>
-    do
+    try (do
     x<-letstmts
-    return x
+    return x)
     <|>
     do
     x<-printstmts
@@ -143,14 +143,14 @@ printstmts = do
     z<-parseRightBracket <?> "}"
     return (w++x++y++z)
 -- ifstmts -> [if expr expr expr] | [if expr expr]
-ifstmts = do
+ifstmts = try (do
     u<-parseLeftBracket <?> "["
     v<-parseIf <?> "if"
     w<-expr
     x<-expr
     y<-expr
     z<-parseRightBracket <?> "]"
-    return (u++v++w++x++y++z)
+    return (u++v++w++x++y++z))
     <|>
     do
     v<-parseLeftBracket <?> "["
@@ -168,9 +168,9 @@ whilestmts = do
     z<-parseRightBracket <?> "]"
     return (v++w++x++y++z)
 -- exprlist -> expr | expr exprlist
-exprlist = do
+exprlist = try (do
     x<-expr
-    return x
+    return x)
     <|>
     do
     x<-expr
@@ -186,12 +186,12 @@ letstmts = do
     z<-parseRightBracket <?> "]"
     return (u++v++w++x++y++z)
 -- varlist -> [name type] | [name type] varlist
-varlist = do
+varlist = try (do
     w<-parseLeftBracket <?> "["
     x<-name
     y<-types
     z<-parseRightBracket <?> "]"
-    return (w++x++y++z)
+    return (w++x++y++z))
     <|>
     do
     v<-parseLeftBracket <?> "["
@@ -201,17 +201,17 @@ varlist = do
     z<-varlist
     return (v++w++x++y++z)
 -- types -> bool | int | float | string
-types = do
+types = try (do
     x<-parseBool <?> "bool"
-    return x
+    return x)
     <|>
-    do
+    try (do
     x<-parseInt <?> "int"
-    return x
+    return x)
     <|>
-    do
+    try (do
     x<-parseFloat <?> "float"
-    return x
+    return x)
     <|>
     do
     x<-parseString <?> "string"
