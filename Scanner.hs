@@ -8,93 +8,51 @@ module Scanner where
 import Data.Char (isAlpha, isDigit, isSpace)
 
 data Token
-    = VarId String
-    | IntTok Int
-    | FloatTok Float
-    | StringTok String
-    | BoolTok Bool
-
--- Symbols
-
-    | LeftParen
-    | RightParen
-
--- Operators
-
-    | Minus
-    | Plus
-    | Mod
-    | Carrot
-    | Mult
-    | Div
-    | Equal
-    | Less
-
--- Keywords
-
-    | KW_And
-    | KW_Or
-    | KW_Not
-    | KW_Iff
-
-    | KW_Assign
-    | KW_Cos
-    | KW_Exp
-    | KW_If
-    | KW_Let
-    | KW_Logn
-    | KW_PrintLn
-    | KW_Sin
-    | KW_Tan
-    | KW_While
-
-    | KW_Int
-    | KW_Float
-    | KW_Bool
-    | KW_String        
-
-    | EOF
-    | Epsilon
-    | Error String
+    = T_LeftBracket
+    | T_RightBracket
+    | T_Assignment
+    | T_AssignmentError
+    | T_Add
+    | T_Minus
+    | T_Multiply
+    | T_Divide
+    | T_Mod
+    | T_Exponentiate
+    | T_Equal
+    | T_Greater
+    | T_GreaterEq
+    | T_Less
+    | T_LessEq
+    | T_NotEq
+    | T_NotEqError
+    | T_Or
+    | T_And
+    | T_Not
+    | T_Sin
+    | T_Cos
+    | T_Tan
+    | T_StringVal String
+    | T_StringValError String
+    | T_True
+    | T_False
+    | T_NameVal String
+    | T_IntVal String
+    | T_FloatVal String
+    | T_FloatValFrac String
+    | T_FloatValError String
+    | T_Decimal
+    | T_Stdout
+    | T_If
+    | T_While
+    | T_Let
+    | T_Bool
+    | T_Int
+    | T_Float
+    | T_String
+    | T_EOF
+    | T_Error String
+    | T_Empty
     deriving (Eq)
-
-operators :: [(Char,Token)]
-operators = [
-    ( '-', Minus ),
-    ( '+', Plus ),
-    ( '%', Mod ),
-    ( '^', Carrot ),
-    ( '*', Mult ),
-    ( '/', Div ),
-    ( '=', Equal ),
-    ( '<', Less ),
-    ( '(', LeftParen),
-    ( ')', RightParen)
-    ]
-
-keywords :: [(String,Token)]
-keywords = [
-    ( "and", KW_And ),
-    ( "or", KW_Or ),
-    ( "not", KW_Not ),
-    ( "iff", KW_Iff ),
-    ( "assign", KW_Assign ),
-    ( "cos", KW_Cos ),
-    ( "exp", KW_Exp ),
-    ( "if", KW_If ),
-    ( "let", KW_Let ),
-    ( "log", KW_Logn ),
-    ( "println", KW_PrintLn ),
-    ( "sin", KW_Sin ),
-    ( "tan", KW_Tan ),
-    ( "while", KW_While ),
-    ( "int", KW_Int ),
-    ( "float", KW_Float ),
-    ( "string", KW_String ),
-    ( "bool", KW_Bool ),
-    ( "true", BoolTok True),
-    ( "false", BoolTok False)
-    ]
 
 {----------------------------------------------------
     lexer:
@@ -102,163 +60,148 @@ keywords = [
     string and transforms it into a list of
     tokens.
 -----------------------------------------------------}
-lexer :: String->[Token]
-lexer xs = let s = removeWhiteSpace xs
-    in lexer' s
-
+lexer :: String -> [Token]
+lexer xs = lexer' T_Empty xs
 
 {----------------------------------------------------
     lexer':
     Called by 'lexer' as a sister function.
 -----------------------------------------------------}
-lexer' ::  String -> [Token]
-lexer' [] = [EOF]
-lexer' xs = let (t, rest) = lexToken xs
-    in (t:lexer rest)
-
-
-{----------------------------------------------------
-    removeWhiteSpace:
-    takes a string and strips off preceding
-    whitespace.
------------------------------------------------------}
-removeWhiteSpace :: String -> String
-removeWhiteSpace [] = []
-removeWhiteSpace l@(x:xs) = case isSpace x of
-    True -> removeWhiteSpace xs
-    False -> l
-
-
-{----------------------------------------------------
-    lexToken:   
-    Determines the first token on the string. The
-    prefix matching the token is removed. The token
-    and the remainder of the string is returned.
------------------------------------------------------}
-lexToken :: String->(Token, String)
-lexToken [] = (EOF, [])
-lexToken l@(x:xs)
-    | isQuote = let (string, rest) = span (/='"') xs
-                    in (StringTok string, tail rest)
-    | isOperator = ((map snd (filter ((==x).fst) operators)) !! 0, xs)
-    | isKeyword = ((map snd (filter ((==first).fst) keywords)) !! 0, rest)
-    | isDigit x = readNum l
-    | isVariable = (VarId first, rest)
-    | otherwise = (Error "Unknown character", xs)
-    where
-        isQuote = x=='"'
-        isOperator = x `elem` (map fst operators)
-        isVariable = (isAlpha x || x=='_')
-        isKeyword = first `elem` (map fst keywords)
-        (first, rest) = span (\x->isAlpha x || isDigit x || x=='_') l
-
--- We can merge all of the "is" prefixed variables in where into the guards
--- but I left it for readability.
-
-{----------------------------------------------------
-    readNum:
-    Takes a string and returns an IntTok or FloatTok
-    token and the rest of the string.
------------------------------------------------------}
-readNum :: String->(Token, String)
-readNum [] = (EOF, [])
-readNum xs = let (i, rest0) = span isDigit xs
-    in case rest0 of
-        ('.':ps) -> let (f, rest1) = span isDigit ps
-            in case rest1 of
-                ('e':es) -> let (e, rest2) = readE rest1
-                    in (FloatTok (read (i++"."++f++e)::Float), rest2)
-                (_) -> (FloatTok (read (i++"."++f)::Float), rest1)
-        ('e':[]) -> let (e, rest1) = readE rest0
-            in (FloatTok (read (concat [i, e])::Float), rest1)
-        ('e':es) -> if isAlpha (head es)
-            then (IntTok (read i::Int), rest0)
-            else let (e, rest1) = readE rest0
-                in (FloatTok (read (concat [i, e])::Float), rest1)
-        (_) -> (IntTok (read i::Int), rest0)
-
-
-{----------------------------------------------------
-    readE:
-    Reads the exponent value off the beginning of a
-    string. String should begin with 'e'.
------------------------------------------------------}
-readE :: String->(String, String)
-readE [] = ([], [])
-readE (x:[]) = ("e+0",[])
-readE (x:y:[])
-    | isDigit y = ("e+"++[y],[])
-    | isSpace y = ("e+0",[])
-    | otherwise = ([],[x,y])
-readE (x:y:z:[])
-    | isDigit y && isDigit z = ("e+"++[y,z],[])
-    | y `elem` "+-" && isDigit z = ([x,y,z],[])
-    | isSpace y = ("e+0",[z])
-    | otherwise = ([],[x,y,z])
-readE (x:y:z:xs)
-    | isDigit y = let (exp, rest) = span isDigit (y:z:xs)
-        in (("e+"++exp),rest)
-    | y `elem` "+-" && isDigit z = let (exp, rest) = span isDigit (z:xs)
-        in (([x,y]++exp),rest)
-    | isSpace y = ("e+0",(z:xs))
-    | otherwise = ("e+0",(y:z:xs))
-
-{----------------------------------------------------
-    Main:
-    Takes a filename as an argument for scanning and
-    returns a list of tokens.
-main = do
-    (fileName1:_) <- getArgs
-    printWords fileName1
------------------------------------------------------}
-
-
-{----------------------------------------------------
-    printWords:
-    Display driver for our token list.
-
-printWords :: FilePath -> IO ()
-printWords source = do
-    contents <- readFile source
-    mapM_ putStrLn (map show $ lexer contents)
------------------------------------------------------}
+lexer' :: Token -> String -> [Token]
+-- T_Empty
+lexer' T_Empty []       = []
+lexer' T_Empty ('[':xs) = T_LeftBracket  : lexer' T_Empty xs
+lexer' T_Empty (']':xs) = T_RightBracket : lexer' T_Empty xs
+lexer' T_Empty (':':xs) =                  lexer' T_AssignmentError xs
+lexer' T_Empty ('+':xs) = T_Add          : lexer' T_Empty xs
+lexer' T_Empty ('-':xs) = T_Minus        : lexer' T_Empty xs
+lexer' T_Empty ('*':xs) = T_Multiply     : lexer' T_Empty xs
+lexer' T_Empty ('/':xs) = T_Divide       : lexer' T_Empty xs
+lexer' T_Empty ('%':xs) = T_Mod          : lexer' T_Empty xs
+lexer' T_Empty ('^':xs) = T_Exponentiate : lexer' T_Empty xs
+lexer' T_Empty ('=':xs) = T_Equal        : lexer' T_Empty xs
+lexer' T_Empty ('>':xs) =                  lexer' T_Greater xs
+lexer' T_Empty ('<':xs) =                  lexer' T_Less xs
+lexer' T_Empty ('!':xs) =                  lexer' T_NotEqError xs
+lexer' T_Empty ('"':xs) =                  lexer' (T_StringValError []) xs
+lexer' T_Empty ('_':xs) =                  lexer' (T_NameVal "_") xs
+lexer' T_Empty ('.':xs) =                  lexer' T_Decimal xs
+lexer' T_Empty (x:xs)
+    | isSpace x = lexer' T_Empty xs
+    | isAlpha x = lexer' (T_NameVal [x]) xs
+    | isDigit x = lexer' (T_IntVal [x]) xs
+    | otherwise = (T_Error [x]) : lexer' T_Empty xs
+-- T_AssignmentError
+lexer' T_AssignmentError ('=':xs) = T_Assignment : lexer' T_Empty xs
+lexer' T_AssignmentError xs       = T_Error ":"  : lexer' T_Empty xs
+-- T_Greater
+lexer' T_Greater ('=':xs) = T_GreaterEq : lexer' T_Empty xs
+lexer' T_Greater xs       = T_Greater   : lexer' T_Empty xs
+-- T_Less
+lexer' T_Less ('=':xs) = T_LessEq : lexer' T_Empty xs
+lexer' T_Less xs       = T_Less   : lexer' T_Empty xs
+-- T_NotEqError
+lexer' T_NotEqError ('=':xs) = T_NotEq     : lexer' T_Empty xs
+lexer' T_NotEqError xs       = T_Error "!" : lexer' T_Empty xs
+-- T_StringValError
+lexer' (T_StringValError s) ('"':xs) = T_StringVal s : lexer' T_Empty xs
+lexer' (T_StringValError s) (x:xs)   = lexer' (T_StringValError (s++[x])) xs
+-- T_NameVal
+lexer' (T_NameVal s) ('_':xs) = lexer' (T_NameVal (s++"_")) xs
+lexer' (T_NameVal s) l@(x:xs)
+    | isAlpha x     =                 lexer' (T_NameVal (s++[x])) xs
+    | isDigit x     =                 lexer' (T_NameVal (s++[x])) xs
+    | s == "or"     = T_Or          : lexer' T_Empty l
+    | s == "and"    = T_And         : lexer' T_Empty l
+    | s == "not"    = T_Not         : lexer' T_Empty l
+    | s == "sin"    = T_Sin         : lexer' T_Empty l
+    | s == "cos"    = T_Cos         : lexer' T_Empty l
+    | s == "tan"    = T_Tan         : lexer' T_Empty l
+    | s == "true"   = T_True        : lexer' T_Empty l
+    | s == "false"  = T_False       : lexer' T_Empty l
+    | s == "stdout" = T_Stdout      : lexer' T_Empty l
+    | s == "if"     = T_If          : lexer' T_Empty l
+    | s == "while"  = T_While       : lexer' T_Empty l
+    | s == "let"    = T_Let         : lexer' T_Empty l
+    | s == "bool"   = T_Bool        : lexer' T_Empty l
+    | s == "int"    = T_Int         : lexer' T_Empty l
+    | s == "float"  = T_Float       : lexer' T_Empty l
+    | s == "string" = T_String      : lexer' T_Empty l
+    | otherwise     = (T_NameVal s) : lexer' T_Empty l
+-- T_Decimal
+lexer' T_Decimal l@(x:xs)
+    | isDigit x = lexer' (T_FloatValFrac ('.':[x])) xs
+    | otherwise = T_Decimal : lexer' T_Empty l
+-- T_IntVal
+lexer' (T_IntVal s) ('.':xs) = lexer' (T_FloatValFrac (s++".")) xs
+lexer' (T_IntVal s) ('e':xs) = lexer' (T_FloatValError (s++"e")) xs
+lexer' (T_IntVal s) l@(x:xs)
+    | isDigit x = lexer' (T_IntVal (s++[x])) xs
+    | otherwise = (T_IntVal s) : lexer' T_Empty l
+-- T_FloatValFrac
+lexer' (T_FloatValFrac s) []       = [T_FloatVal s]
+lexer' (T_FloatValFrac s) ('e':xs) = lexer' (T_FloatValError (s++"e")) xs
+lexer' (T_FloatValFrac s) l@(x:xs)
+    | isDigit x = lexer' (T_FloatValFrac (s++[x])) xs
+    | otherwise = (T_FloatVal s) : lexer' T_Empty l
+-- T_FloatValError
+lexer' (T_FloatValError s) ('+':xs) = lexer' (T_FloatValError (s++"+")) xs
+lexer' (T_FloatValError s) ('-':xs) = lexer' (T_FloatValError (s++"-")) xs
+lexer' (T_FloatValError s) l@(x:xs)
+    | isDigit x = lexer' (T_FloatVal (s++[x])) xs
+    | otherwise = (T_FloatValError s) : lexer' T_Empty l
+-- T_FloatVal
+lexer' (T_FloatVal s) l@(x:xs)
+    | isDigit x = lexer' (T_FloatVal (s++[x])) xs
+    | otherwise = (T_FloatVal s) : lexer' T_Empty l
+-- Catch
+lexer' t [] = [t]
 
 {----------------------------------------------------
     Show definitions for Tokens
 -----------------------------------------------------}
 instance Show Token where
-    show (VarId x)     = show x
-    show (IntTok x)    = show x
-    show (FloatTok x)  = show x
-    show (StringTok x) = show x
-    show (BoolTok x)   = show x
-    show (LeftParen)   = "("
-    show (RightParen)  = ")"
-    show (Minus)       = "-"
-    show (Plus)        = "+"
-    show (Mod)         = "%"
-    show (Carrot)      = "^"
-    show (Mult)        = "*"
-    show (Div)         = "/"
-    show (Equal)       = "="
-    show (Less)        = "<"
-    show (KW_And)      = "and"
-    show (KW_Or)       = "or"
-    show (KW_Not)      = "not"
-    show (KW_Iff)      = "iff"
-    show (KW_Assign)   = "assign"
-    show (KW_Cos)      = "cos"
-    show (KW_Exp)      = "e"
-    show (KW_If)       = "if"
-    show (KW_Let)      = "let"
-    show (KW_Logn)     = "logn"
-    show (KW_PrintLn)  = "println"
-    show (KW_Sin)      = "sin"
-    show (KW_Tan)      = "tan"
-    show (KW_While)    = "while"
-    show (KW_Int)      = "int"
-    show (KW_Float)    = "float"
-    show (KW_Bool)     = "bool"
-    show (KW_String)   = "string"
-    show (EOF)         = "EOF"
-    show (Error x)     = show x
+    show T_LeftBracket  = "["
+    show T_RightBracket = "]"
+    show T_Assignment   = ":="
+    show T_AssignmentError = "Error :"
+    show T_Add = "+"
+    show T_Minus = "-"
+    show T_Multiply = "*"
+    show T_Divide = "/"
+    show T_Mod = "%"
+    show T_Exponentiate = "^"
+    show T_Equal = "="
+    show T_Greater = "<"
+    show T_GreaterEq = ">="
+    show T_Less = "<"
+    show T_LessEq = "<="
+    show T_NotEq = "!="
+    show T_NotEqError = "Error !"
+    show T_Or = "or"
+    show T_And = "and"
+    show T_Not = "not"
+    show T_Sin = "sin"
+    show T_Cos = "cos"
+    show T_Tan = "tan"
+    show (T_StringVal s) = "String "++show s
+    show (T_StringValError s) = "String Error "++show s
+    show T_True = "true"
+    show T_False = "false"
+    show (T_NameVal s) = "Name "++show s
+    show (T_IntVal s) = "Int "++show s
+    show (T_FloatVal s) = "Float "++show s
+    show (T_FloatValFrac s) = "Float Error "++show s
+    show (T_FloatValError s) = "Float Error "++show s
+    show T_Decimal = "Decimal Error ."
+    show T_Stdout = "stdout"
+    show T_If = "if"
+    show T_While = "while"
+    show T_Let = "let"
+    show T_Bool = "bool"
+    show T_Int = "int"
+    show T_Float = "float"
+    show T_String = "string"
+    show T_EOF = "<EOF>"
+    show (T_Error s) = "Error "++show s
+    show T_Empty = ""
