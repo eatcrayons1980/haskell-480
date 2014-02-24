@@ -6,7 +6,6 @@ SOURCE = Parser.hs
 EXE = parser
 CCC = ghc
 CCFLAGS = --make
-RUNFLAGS =
 
 default: compiler
 
@@ -20,15 +19,12 @@ clean:
 stu: stutest.out
 
 stutest.out: compiler
-	-./$(EXE) $(RUNFLAGS) stutest1.in > stutest1.out
-	cat stutest1.out
-	-./$(EXE) $(RUNFLAGS) stutest2.in > stutest2.out
-	cat stutest2.out
-	-./$(EXE) $(RUNFLAGS) stutest3.in > stutest3.out
-	cat stutest3.out
+	-./$(EXE) stutest1.in > stutest1.out
+	-./$(EXE) stutest2.in > stutest2.out
+	-./$(EXE) stutest3.in > stutest3.out
 	cat stutest1.in stutest1.out stutest2.in stutest2.out stutest3.in stutest3.out
 
 proftest.out: compiler
-	cat $(PROFTEST)
-	$(EXE) $(PROFTEST) > proftest.out
+	cat proftest.in
+	- $(EXE) proftest.in > proftest.out
 	cat proftest.out
