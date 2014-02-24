@@ -1,6 +1,6 @@
 {----------------------------------------------------
     CS480 - IBTL Compiler
-    Authors: Kevin Tang, Kyle Mannari, Paul Freeman
+    Authors: Paul Freeman
 -----------------------------------------------------}
 module Scanner where
 

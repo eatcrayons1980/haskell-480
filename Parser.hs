@@ -14,303 +14,283 @@ data Tree = EmptyTree | Node (String, [Tree]) deriving Show
 {- Grammar -}
 -- T -> [S]
 t = do
-    x<-parseLeftBracket <?> "["
-    y<-s
-    z<-parseRightBracket <?> "]"
-    return $ Node ("t", [x,y,z])
+    parseLeftBracket <?> "["
+    x<-s
+    parseRightBracket <?> "]"
+    return $ Node ("TOP", x)
 -- S -> []S' | [S]S' | exprS'
 s = try (do
-    x<-parseLeftBracket <?> "["
-    y<-parseRightBracket <?> "]"
-    z<-s'
-    return $ Node ("s", [x,y,z]))
+    parseLeftBracket <?> "["
+    parseRightBracket <?> "]"
+    x<-s'
+    return x)
     <|>
     try (do
-    w<-parseLeftBracket <?> "["
+    parseLeftBracket <?> "["
     x<-s
-    y<-parseRightBracket <?> "]"
-    z<-s'
-    return $ Node ("s", [w,x,y,z]))
+    parseRightBracket <?> "]"
+    y<-s'
+    return $ x++y)
     <|>
     do
     x<-expr
     y<-s'
-    return $ Node ("s", [x,y])
+    return $ x:y
 -- S' -> SS' | Empty
 s' = try (do
     x<-s
     y<-s'
-    return $ Node ("s'", [x,y]))
+    return $ x++y)
     <|>
-    return EmptyTree
+    return []
 -- expr -> oper | stmts
 expr = try (do
     x<-oper
-    return $ Node ("expr", [x]))
+    return x)
     <|>
     do
     x<-stmts
-    return $ Node ("expr", [x])
+    return x
 -- oper -> [:= name oper] | [binops oper oper] | [unops oper] | constants | name
 oper = try (do
-    v<-parseLeftBracket <?> "["
-    w<-parseAssignment <?> ":="
+    parseLeftBracket <?> "["
+    parseAssignment <?> ":="
     x<-name
     y<-oper
-    z<-parseRightBracket <?> "]"
-    return $ Node ("oper", [v,w,x,y,z]))
+    parseRightBracket <?> "]"
+    return $ Node (":=", [Node (x,[]),y]))
     <|>
     try (do
-    v<-parseLeftBracket <?> "["
+    parseLeftBracket <?> "["
     w<-binops
     x<-oper
     y<-oper
-    z<-parseRightBracket <?> "]"
-    return $ Node ("oper", [v,w,x,y,z]))
+    parseRightBracket <?> "]"
+    return $ Node (w, [x,y]))
     <|>
     try (do
-    w<-parseLeftBracket <?> "["
+    parseLeftBracket <?> "["
     x<-unops
     y<-oper
-    z<-parseRightBracket <?> "]"
-    return $ Node ("oper", [w,x,y,z]))
+    parseRightBracket <?> "]"
+    return $ Node (x, [y]))
     <|>
     try (do
     x<-constants
-    return $ Node ("oper", [x]))
+    return $ Node (x,[]))
     <|>
     do
     x<-name
-    return $ Node ("oper", [x])
+    return $ Node (x,[])
 -- binops -> + | - | * | / | % | ^ | = | > | >= | < | <= | != | or | and
 binops = do
     x<-parseBinOp <?> "binary operator"
-    return $ Node ("binop", [x])
+    return x
 -- unops -> - | not | sin | cos | tan
 unops = do
     x<-parseUnOp <?> "bnary operator"
-    return $ Node ("unop", [x])
+    return x
 -- constants -> strings | ints | floats
 constants = try (do
     x<-strings
-    return $ Node ("constant", [x]))
+    return x)
     <|>
     try (do
     x<-ints
-    return $ Node ("constant", [x]))
+    return x)
     <|>
     do
     x<-floats
-    return $ Node ("constant", [x])
+    return x
 -- strings -> regex for str literal in C | true | false
 strings = try (do
     x<-parseStringValue <?> "string value"
-    return $ Node ("string", [x]))
+    return x)
     <|>
     do
     x<-parseBoolValue <?> "true/false"
-    return $ Node ("string", [x])
+    return x
 -- name -> regex for ids in C
 name = do
     x<-parseNameValue <?> "name value"
-    return $ Node ("name", [x])
+    return x
 -- ints -> regex for pos/neg ints in C
 ints = do
     x<-parseIntValue <?> "int value"
-    return $ Node ("int", [x])
+    return x
 -- floats -> regex for pos/neg floats in C
 floats = do
     x<-parseFloatValue <?> "float value"
-    return $ Node ("float", [x])
+    return x
 -- stmts -> ifstmts | whilestmts | letstmts | printstmts
 stmts = try (do
     x<-ifstmts
-    return $ Node ("stmt", [x]))
+    return x)
     <|>
     try (do
     x<-whilestmts
-    return $ Node ("stmt", [x]))
+    return x)
     <|>
     try (do
     x<-letstmts
-    return $ Node ("stmt", [x]))
+    return x)
     <|>
     do
     x<-printstmts
-    return $ Node ("stmt", [x])
+    return x
 -- printstmts -> [stdout oper]
 printstmts = do
-    w<-parseLeftBracket <?> "["
-    x<-parseStdout <?> "stdout"
-    y<-oper
-    z<-parseRightBracket <?> "}"
-    return $ Node ("printstmt", [w,x,y,z])
+    parseLeftBracket <?> "["
+    parseStdout <?> "stdout"
+    x<-oper
+    parseRightBracket <?> "}"
+    return $ Node ("print", [x])
 -- ifstmts -> [if expr expr expr] | [if expr expr]
 ifstmts = try (do
-    u<-parseLeftBracket <?> "["
-    v<-parseIf <?> "if"
+    parseLeftBracket <?> "["
+    parseIf <?> "if"
     w<-expr
     x<-expr
     y<-expr
-    z<-parseRightBracket <?> "]"
-    return $ Node ("ifstmt", [u,v,w,x,y,z]))
+    parseRightBracket <?> "]"
+    return $ Node ("if", [w,x,y]))
     <|>
     do
-    v<-parseLeftBracket <?> "["
-    w<-parseIf <?> "if"
+    parseLeftBracket <?> "["
+    parseIf <?> "if"
     x<-expr
     y<-expr
-    z<-parseRightBracket <?> "]"
-    return $ Node ("ifstmt", [v,w,x,y,z])
+    parseRightBracket <?> "]"
+    return $ Node ("if", [x,y])
 -- whilestmts -> [while expr exprlist]
 whilestmts = do
-    v<-parseLeftBracket <?> "["
-    w<-parseWhile <?> "while"
+    parseLeftBracket <?> "["
+    parseWhile <?> "while"
     x<-expr
     y<-exprlist
-    z<-parseRightBracket <?> "]"
-    return $ Node ("whilestmt", [v,w,x,y,z])
+    parseRightBracket <?> "]"
+    return $ Node ("while", x:y)
 -- exprlist -> expr | expr exprlist
 exprlist = try (do
     x<-expr
-    return $ Node ("exprlist", [x]))
+    return [x])
     <|>
     do
     x<-expr
     y<-exprlist
-    return $ Node ("exprlist", [x,y])
+    return $ x:y
 -- letstmts = [let [varlist]]
 letstmts = do
-    u<-parseLeftBracket <?> "["
-    v<-parseLet <?> "let"
-    w<-parseLeftBracket <?> "["
+    parseLeftBracket <?> "["
+    parseLet <?> "let"
+    parseLeftBracket <?> "["
     x<-varlist
-    y<-parseRightBracket <?> "]"
-    z<-parseRightBracket <?> "]"
-    return $ Node ("letstmt", [u,v,w,x,y,z])
+    parseRightBracket <?> "]"
+    parseRightBracket <?> "]"
+    return $ Node ("let", x)
 -- varlist -> [name type] | [name type] varlist
 varlist = try (do
-    w<-parseLeftBracket <?> "["
+    parseLeftBracket <?> "["
     x<-name
     y<-types
-    z<-parseRightBracket <?> "]"
-    return $ Node ("varlist", [w,x,y,z]))
+    parseRightBracket <?> "]"
+    return $ [Node (y, [Node (x,[])])])
     <|>
     do
-    v<-parseLeftBracket <?> "["
+    parseLeftBracket <?> "["
     w<-name
     x<-types
-    y<-parseRightBracket <?> "]"
-    z<-varlist
-    return $ Node ("varlist", [v,w,x,y,z])
+    parseRightBracket <?> "]"
+    y<-varlist
+    return $ Node (x, [Node (w,[])]) : y
 -- types -> bool | int | float | string
-types = try (do
-    x<-parseBool <?> "bool"
-    return $ Node ("bool", [x]))
-    <|>
-    try (do
-    x<-parseInt <?> "int"
-    return $ Node ("int", [x]))
-    <|>
-    try (do
-    x<-parseFloat <?> "float"
-    return $ Node ("float", [x]))
-    <|>
-    do
-    x<-parseString <?> "string"
-    return $ Node ("string", [x])
+types = do
+    x<-parseType <?> "type"
+    return x
 
 {- Parsers -}
 parseLeftBracket = do
     i <- getState
-    mytoken (\t -> case t of T_LeftBracket -> Just $ Node ("[", [])
+    mytoken (\t -> case t of T_LeftBracket -> Just "["
                              other         -> Nothing)
 parseRightBracket = do
     i <- getState
-    mytoken (\t -> case t of T_RightBracket -> Just $ Node ("]", [])
+    mytoken (\t -> case t of T_RightBracket -> Just "]"
                              other          -> Nothing)
 parseAssignment = do
     i <- getState
-    mytoken (\t -> case t of T_Assignment   -> Just $ Node (":=", [])
+    mytoken (\t -> case t of T_Assignment   -> Just ":="
                              other          -> Nothing)
 parseBinOp = do
     i <- getState
-    mytoken (\t -> case t of T_Add          -> Just $ Node ("+", [])
-                             T_Minus        -> Just $ Node ("-", [])
-                             T_Multiply     -> Just $ Node ("*", [])
-                             T_Divide       -> Just $ Node ("/", [])
-                             T_Mod          -> Just $ Node ("%", [])
-                             T_Exponentiate -> Just $ Node ("^", [])
-                             T_Equal        -> Just $ Node ("=", [])
-                             T_Greater      -> Just $ Node (">", [])
-                             T_GreaterEq    -> Just $ Node (">=", [])
-                             T_Less         -> Just $ Node ("<", [])
-                             T_LessEq       -> Just $ Node ("<=", [])
-                             T_NotEq        -> Just $ Node ("!=", [])
-                             T_Or           -> Just $ Node ("or", [])
-                             T_And          -> Just $ Node ("and", [])
+    mytoken (\t -> case t of T_Add          -> Just "+"
+                             T_Minus        -> Just "-"
+                             T_Multiply     -> Just "*"
+                             T_Divide       -> Just "/"
+                             T_Mod          -> Just "%"
+                             T_Exponentiate -> Just "^"
+                             T_Equal        -> Just "="
+                             T_Greater      -> Just ">"
+                             T_GreaterEq    -> Just ">="
+                             T_Less         -> Just "<"
+                             T_LessEq       -> Just "<="
+                             T_NotEq        -> Just "!="
+                             T_Or           -> Just "or"
+                             T_And          -> Just "and"
                              other          -> Nothing)
 parseUnOp = do
     i <- getState
-    mytoken (\t -> case t of T_Minus        -> Just $ Node ("-", [])
-                             T_Not          -> Just $ Node ("not", [])
-                             T_Sin          -> Just $ Node ("sin", [])
-                             T_Cos          -> Just $ Node ("cos", [])
-                             T_Tan          -> Just $ Node ("tan", [])
+    mytoken (\t -> case t of T_Minus        -> Just "-"
+                             T_Not          -> Just "not"
+                             T_Sin          -> Just "sin"
+                             T_Cos          -> Just "cos"
+                             T_Tan          -> Just "tan"
                              other          -> Nothing)
 parseStringValue = do
     i <- getState
-    mytoken (\t -> case t of (T_StringVal s)-> Just $ Node (s, [])
+    mytoken (\t -> case t of (T_StringVal s)-> Just s
                              other          -> Nothing)
 parseBoolValue = do
     i <- getState
-    mytoken (\t -> case t of T_True         -> Just $ Node ("true", [])
-                             T_False        -> Just $ Node ("false", [])
+    mytoken (\t -> case t of T_True         -> Just "true"
+                             T_False        -> Just "false"
                              other          -> Nothing)
 parseNameValue = do
     i <- getState
-    mytoken (\t -> case t of (T_NameVal s)  -> Just $ Node (s, [])
+    mytoken (\t -> case t of (T_NameVal s)  -> Just s
                              other          -> Nothing)
 parseIntValue = do
     i <- getState
-    mytoken (\t -> case t of (T_IntVal s)   -> Just $ Node (s, [])
+    mytoken (\t -> case t of (T_IntVal s)   -> Just s
                              other          -> Nothing)
 parseFloatValue = do
     i <- getState
-    mytoken (\t -> case t of (T_FloatVal s) -> Just $ Node (s, [])
+    mytoken (\t -> case t of (T_FloatVal s) -> Just s
                              other          -> Nothing)
 parseStdout = do
     i <- getState
-    mytoken (\t -> case t of T_Stdout       -> Just $ Node ("stdout", [])
+    mytoken (\t -> case t of T_Stdout       -> Just "stdout"
                              other          -> Nothing)
 parseIf = do
     i <- getState
-    mytoken (\t -> case t of T_If           -> Just $ Node ("if", [])
+    mytoken (\t -> case t of T_If           -> Just "if"
                              other          -> Nothing)
 parseWhile = do
     i <- getState
-    mytoken (\t -> case t of T_While        -> Just $ Node ("while", [])
+    mytoken (\t -> case t of T_While        -> Just "while"
                              other          -> Nothing)
 parseLet = do
     i <- getState
-    mytoken (\t -> case t of T_Let          -> Just $ Node ("let", [])
+    mytoken (\t -> case t of T_Let          -> Just "let"
                              other          -> Nothing)
-parseBool = do
+parseType = do
     i <- getState
-    mytoken (\t -> case t of T_Bool         -> Just $ Node ("bool", [])
+    mytoken (\t -> case t of T_Bool         -> Just "bool"
+                             T_Int          -> Just "int"
+                             T_Float        -> Just "float"
+                             T_String       -> Just "string"
                              other          -> Nothing)
-parseInt = do
-    i <- getState
-    mytoken (\t -> case t of T_Int          -> Just $ Node ("int", [])
-                             other          -> Nothing)
-parseFloat = do
-    i <- getState
-    mytoken (\t -> case t of T_Float        -> Just $ Node ("float", [])
-                             other          -> Nothing)
-parseString = do
-    i <- getState
-    mytoken (\t -> case t of T_String       -> Just $ Node ("string", [])
-                             other          -> Nothing)
+
 {- Helpers -}
 mytoken test = tokenPrim show update_pos test
 
@@ -322,7 +302,7 @@ moreLimbs = not . (all (==' '))
 indent n = take n spaces'
 
 printTree EmptyTree      = repeat ""
-printTree (Node (s, [])) = (" "++s++" ") : repeat (take (length s + 2) spaces')
+printTree (Node (s, [])) = takeWhile moreLimbs $ (" "++s++" ") : repeat (take (length s + 2) spaces')
 printTree (Node (s, t))  = takeWhile moreLimbs $ first : map padding rest
     where
         rest      = foldl1 (mymerge) (map printTree t)
